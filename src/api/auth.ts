@@ -282,4 +282,49 @@ export const logoutUser = () => {
  */
 export const isAuthenticated = () => {
     return localStorage.getItem('isAuthenticated') === 'true' && !!localStorage.getItem('token');
+};
+
+/**
+ * Synchronize user tier with backend
+ * This ensures the database and local storage have the same tier value
+ * @returns {Promise<Object>} Updated user data
+ */
+export const synchronizeTier = async () => {
+    try {
+        // Get current tier from local storage
+        const currentTier = localStorage.getItem('geminiTier') || 'free';
+
+        // Get user token
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+            console.error('No authentication token found when synchronizing tier');
+            throw new Error('No authentication token found');
+        }
+
+        console.log(`Synchronizing tier: Local tier is ${currentTier}`);
+
+        // Update tier in database
+        const response = await fetch(`${API_URL}/auth/tier`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ tier: currentTier }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.error('Error synchronizing tier:', data);
+            throw new Error(data.message || 'Failed to synchronize tier');
+        }
+
+        console.log('Tier synchronized successfully:', data);
+        return data;
+    } catch (error) {
+        console.error('Error in synchronizeTier API call:', error);
+        throw error;
+    }
 }; 
