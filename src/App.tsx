@@ -20,6 +20,7 @@ import Contact from './pages/Contact';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import './App.css';
+import { synchronizeTier } from '@/api/auth';
 
 export const dispatchAuthEvent = (isAuthenticated: boolean, email?: string) => {
   const event = new CustomEvent('authStateChanged', {
@@ -54,6 +55,19 @@ function App() {
       window.removeEventListener('resize', setVhProperty);
       window.removeEventListener('orientationchange', setVhProperty);
     };
+  }, []);
+
+  useEffect(() => {
+    // Check if user is authenticated
+    const isAuth = localStorage.getItem('isAuthenticated') === 'true';
+    const token = localStorage.getItem('token');
+
+    // If authenticated, synchronize tier with backend
+    if (isAuth && token) {
+      synchronizeTier().catch(error => {
+        console.error('Background tier synchronization failed:', error);
+      });
+    }
   }, []);
 
   return (
