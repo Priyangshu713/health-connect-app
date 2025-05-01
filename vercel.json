@@ -1,15 +1,15 @@
 {
   "version": 2,
-  "builds": [
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "rewrites": [
     {
-      "src": "backend/api/index.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
+      "source": "/api/(.*)",
+      "destination": "https://health-connect-backend-umber.vercel.app/api/$1"
+    },
     {
-      "src": "/(.*)",
-      "dest": "backend/api/index.js"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
