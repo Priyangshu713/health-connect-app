@@ -1,49 +1,70 @@
-# Welcome to the Major project of The Alpha Group
+# 🩺 Health Connect – Major Project by The Alpha Group
 
+Welcome to the official frontend repository of **Health Connect**, developed as a major project by **The Alpha Group**.
 
-**Use your preferred IDE**
+---
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 🚀 Getting Started
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+You can either work locally using your preferred IDE, directly in GitHub, or via GitHub Codespaces.
 
-Follow these steps:
+### 🔧 Local Development Setup
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+Make sure you have **Node.js** and **npm** installed. We recommend using [nvm](https://github.com/nvm-sh/nvm#installing-and-updating) for Node version management.
+
+Follow these steps to start the development server locally:
+
+```bash
+# Step 1: Clone the repository using the Git URL
 git clone <YOUR_GIT_URL>
 
-# Step 2: Navigate to the project directory.
+# Step 2: Navigate to the project directory
 cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Step 3: Install the required dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Step 4: Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### ✏️ Editing Files in GitHub
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- Navigate to the file you want to edit.
+- Click the **pencil icon** (🖉) to edit the file directly in your browser.
+- Commit your changes when you're done.
 
-**Use GitHub Codespaces**
+### 💻 Using GitHub Codespaces
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- Go to the repository's main page.
+- Click the **"Code"** button.
+- Select the **"Codespaces"** tab.
+- Click **"New codespace"** to spin up a development environment instantly.
+- Edit and push your changes right from the Codespace.
 
-## What technologies are used for this project?
+---
 
-This project is built with .
+## 🧰 Tech Stack
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+This project is built using the following modern tools and frameworks:
+
+- ⚡ [Vite](https://vitejs.dev/)
+- ⚛️ [React](https://reactjs.org/)
+- 🟦 [TypeScript](https://www.typescriptlang.org/)
+- 🧩 [shadcn/ui](https://ui.shadcn.com/)
+- 🎨 [Tailwind CSS](https://tailwindcss.com/)
+
+---
+
+## 🛡 License
+
+This project is **proprietary and not licensed for public use or distribution**.
+
+See [`LICENSE`](./LICENSE) and [`COPYRIGHT.md`](./COPYRIGHT.md) for more details.
+
+> ⚠️ Unauthorized use, modification, or redistribution of this code is strictly prohibited and may result in legal action.
+
+---
+
+© 2024–2025 Priyangshu713. All rights reserved.
 
