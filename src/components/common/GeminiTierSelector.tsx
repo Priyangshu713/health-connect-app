@@ -14,7 +14,7 @@ import { useHealthStore, GeminiTier } from '@/store/healthStore';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import Confetti from 'react-confetti';
 import SubscriptionPlansDialog from './SubscriptionPlansDialog';
-import { updateUserTier, debugUpdateUserTier } from '@/api/auth';
+import { updateUserTier, debugUpdateUserTier, synchronizeTier } from '@/api/auth';
 
 interface GeminiTierSelectorProps {
   onToggleAI?: (enabled: boolean) => void;
@@ -63,67 +63,80 @@ const GeminiTierSelector: React.FC<GeminiTierSelectorProps> = ({ onToggleAI }) =
     if (isAuthenticated && token) {
       console.log(`Updating tier to ${tier} in database...`);
 
-      // First try with our API utility
-      updateUserTier(tier)
+      // Use the synchronizeTier function which is more direct
+      synchronizeTier()
         .then(data => {
-          console.log('Tier updated in database via API utility:', data);
+          console.log('Tier synchronized with database:', data);
           toast({
             title: "Tier Updated",
             description: `Your subscription tier has been updated to ${tier}`,
           });
         })
         .catch(error => {
-          console.error('Error updating tier via API utility:', error);
+          console.error('Error synchronizing tier:', error);
 
-          // Try debug endpoint as fallback
-          console.log('Trying debug endpoint as fallback...');
-          debugUpdateUserTier(tier)
-            .then(debugData => {
-              console.log('Tier updated via debug endpoint:', debugData);
+          // Fall back to the original methods if synchronization fails
+          updateUserTier(tier)
+            .then(data => {
+              console.log('Tier updated in database via API utility:', data);
               toast({
-                title: "Tier Updated (Debug)",
-                description: `Your subscription tier has been updated to ${tier} using debug endpoint`,
+                title: "Tier Updated",
+                description: `Your subscription tier has been updated to ${tier}`,
               });
             })
-            .catch(debugError => {
-              console.error('Error in debug tier update:', debugError);
+            .catch(updateError => {
+              console.error('Error updating tier via API utility:', updateError);
 
-              // Finally try direct fetch as a last resort
-              console.log('Trying direct fetch as last resort...');
-              const API_URL = 'https://health-connect-backend-umber.vercel.app/api';
-
-              fetch(`${API_URL}/auth/tier-debug`, {
-                method: 'PUT',
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ tier })
-              })
-                .then(response => {
-                  console.log('Direct fetch response status:', response.status);
-                  return response.json().then(data => {
-                    console.log('Direct fetch response data:', data);
-                    if (!response.ok) {
-                      throw new Error(data.message || 'Failed to update tier');
-                    }
-                    return data;
+              // Try debug endpoint as fallback
+              console.log('Trying debug endpoint as fallback...');
+              debugUpdateUserTier(tier)
+                .then(debugData => {
+                  console.log('Tier updated via debug endpoint:', debugData);
+                  toast({
+                    title: "Tier Updated (Debug)",
+                    description: `Your subscription tier has been updated to ${tier} using debug endpoint`,
                   });
                 })
-                .then(data => {
-                  console.log('Tier updated via direct fetch:', data);
-                  toast({
-                    title: "Tier Updated (Direct)",
-                    description: `Your subscription tier has been updated to ${tier} (direct)`,
-                  });
-                })
-                .catch(directError => {
-                  console.error('Error in direct fetch update:', directError);
-                  toast({
-                    title: "Update Failed",
-                    description: "There was a problem updating your tier in the database. Your local settings have been updated.",
-                    variant: "destructive",
-                  });
+                .catch(debugError => {
+                  console.error('Error in debug tier update:', debugError);
+
+                  // Finally try direct fetch as a last resort
+                  console.log('Trying direct fetch as last resort...');
+                  const API_URL = 'https://health-connect-backend-umber.vercel.app/api';
+
+                  fetch(`${API_URL}/auth/tier-debug`, {
+                    method: 'PUT',
+                    headers: {
+                      'Authorization': `Bearer ${token}`,
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ tier })
+                  })
+                    .then(response => {
+                      console.log('Direct fetch response status:', response.status);
+                      return response.json().then(data => {
+                        console.log('Direct fetch response data:', data);
+                        if (!response.ok) {
+                          throw new Error(data.message || 'Failed to update tier');
+                        }
+                        return data;
+                      });
+                    })
+                    .then(data => {
+                      console.log('Tier updated via direct fetch:', data);
+                      toast({
+                        title: "Tier Updated (Direct)",
+                        description: `Your subscription tier has been updated to ${tier} (direct)`,
+                      });
+                    })
+                    .catch(directError => {
+                      console.error('Error in direct fetch update:', directError);
+                      toast({
+                        title: "Update Failed",
+                        description: "There was a problem updating your tier in the database. Your local settings have been updated.",
+                        variant: "destructive",
+                      });
+                    });
                 });
             });
         });
