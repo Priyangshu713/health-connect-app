@@ -96,22 +96,104 @@ export const updateUserProfile = async (profileData: { name?: string; email?: st
         throw new Error('No authentication token found');
     }
 
-    const response = await fetch(`${API_URL}/auth/profile`, {
-        method: 'PUT',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(profileData),
+    console.log('Profile update starting:', {
+        hasName: !!profileData.name,
+        hasEmail: !!profileData.email,
+        hasPassword: !!profileData.password,
+        hasImage: !!profileData.profileImage,
+        imageSize: profileData.profileImage ? Math.round(profileData.profileImage.length / 1024) + 'KB' : 'none'
     });
 
-    const data = await response.json();
+    try {
+        // If the profile image is very large, we'll use a chunked approach or reduce quality further
+        let data = profileData;
 
-    if (!response.ok) {
-        throw new Error(data.message || 'Failed to update user profile');
+        // Check if image is extremely large and might cause API issues
+        if (profileData.profileImage && profileData.profileImage.length > 1.5 * 1024 * 1024) {
+            console.log('Very large image detected, using alternative approach');
+            // Create a copy without the image for safety
+            const { profileImage, ...basicData } = profileData;
+
+            // First update the basic info
+            const basicResponse = await fetch(`${API_URL}/auth/profile`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(basicData),
+            });
+
+            if (!basicResponse.ok) {
+                const errorData = await basicResponse.json();
+                throw new Error(errorData.message || 'Failed to update basic profile data');
+            }
+
+            // Now try to reduce the image quality further if needed
+            let finalImage = profileImage;
+            if (profileImage.length > 800 * 1024) {
+                // Create a very small version of the image
+                const img = new Image();
+                img.src = profileImage;
+                await new Promise((resolve) => {
+                    img.onload = resolve;
+                });
+
+                const canvas = document.createElement('canvas');
+                // Limit to a very small size
+                const MAX_SIZE = 600;
+                const scale = Math.min(MAX_SIZE / img.width, MAX_SIZE / img.height);
+                canvas.width = img.width * scale;
+                canvas.height = img.height * scale;
+
+                const ctx = canvas.getContext('2d');
+                ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                // Use very low quality
+                finalImage = canvas.toDataURL('image/jpeg', 0.2);
+                console.log('Image reduced to:', Math.round(finalImage.length / 1024) + 'KB');
+            }
+
+            // Now update just the image
+            const imageResponse = await fetch(`${API_URL}/auth/profile`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ profileImage: finalImage }),
+            });
+
+            if (!imageResponse.ok) {
+                throw new Error('Failed to update profile image, but other profile data was updated');
+            }
+
+            return await imageResponse.json();
+        }
+
+        // Standard approach for smaller images
+        const response = await fetch(`${API_URL}/auth/profile`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(profileData),
+        });
+
+        const responseData = await response.json();
+
+        if (!response.ok) {
+            console.error('API error response:', responseData);
+            throw new Error(responseData.message || 'Failed to update user profile');
+        }
+
+        console.log('Profile update successful:', responseData);
+        return responseData;
+    } catch (error) {
+        console.error('Error in updateUserProfile:', error);
+        throw error;
     }
-
-    return data;
 };
 
 /**
@@ -325,6 +407,85 @@ export const synchronizeTier = async () => {
         return data;
     } catch (error) {
         console.error('Error in synchronizeTier API call:', error);
+        throw error;
+    }
+};
+
+/**
+ * Update profile image only - separate from other profile updates
+ * @param {string} imageDataUrl - The image data URL to upload
+ * @returns {Promise<Object>} Updated user data
+ */
+export const updateProfileImage = async (imageDataUrl: string) => {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+        throw new Error('No authentication token found');
+    }
+
+    console.log('Starting profile image upload...');
+    console.log(`Image size: ${Math.round(imageDataUrl.length / 1024)}KB`);
+
+    // Only compress further if absolutely necessary
+    if (imageDataUrl.length > 80 * 1024) {
+        console.warn('Image is large, attempting to optimize further while maintaining quality.');
+        try {
+            // Create a better quality but smaller image
+            const img = new Image();
+            img.src = imageDataUrl;
+
+            await new Promise<void>((resolve, reject) => {
+                img.onload = () => resolve();
+                img.onerror = () => reject(new Error('Failed to load image for final compression'));
+            });
+
+            const canvas = document.createElement('canvas');
+            // Still reasonable size - 250px
+            canvas.width = 250;
+            canvas.height = 250 * (img.height / img.width);
+
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                throw new Error('Could not get canvas context');
+            }
+
+            // High quality rendering
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            // Better quality (20%)
+            imageDataUrl = canvas.toDataURL('image/jpeg', 0.2);
+            console.log(`Final optimized image size: ${Math.round(imageDataUrl.length / 1024)}KB`);
+        } catch (e) {
+            console.error('Error performing final optimization:', e);
+            // Continue with the original image since this is just a safety step
+        }
+    }
+
+    try {
+        // Try to prevent any unnecessary data in the request
+        const response = await fetch(`${API_URL}/auth/profile`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                profileImage: imageDataUrl
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('API error response:', errorData);
+            throw new Error(errorData.message || 'Failed to update profile image');
+        }
+
+        const data = await response.json();
+        console.log('Profile image update successful');
+        return data;
+    } catch (error) {
+        console.error('Error in updateProfileImage:', error);
         throw error;
     }
 }; 
