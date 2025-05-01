@@ -156,11 +156,11 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ isOpen, onClose }) =>
 
         setIsUploading(true);
 
-        // File size validation (max 2MB)
-        if (file.size > 2 * 1024 * 1024) {
+        // File size validation (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
             toast({
                 title: 'File too large',
-                description: 'Please select an image smaller than 2MB',
+                description: 'Please select an image smaller than 10MB',
                 variant: 'destructive',
             });
             setIsUploading(false);
