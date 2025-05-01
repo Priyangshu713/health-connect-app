@@ -19,7 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { getUserProfile, updateUserProfile, synchronizeTier } from '@/api/auth';
+import { getUserProfile, updateUserProfile, synchronizeTier, updateProfileImage } from '@/api/auth';
 import { useHealthStore } from '@/store/healthStore';
 
 // Form schema
@@ -113,36 +113,148 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ isOpen, onClose }) =>
         }
     };
 
+    const createTinyAvatar = (letter: string, color: string = '#4f46e5') => {
+        // Create a tiny canvas for simple text avatar
+        const canvas = document.createElement('canvas');
+        canvas.width = 60;
+        canvas.height = 60;
+        const ctx = canvas.getContext('2d');
+
+        if (!ctx) return null;
+
+        // Draw background
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, 60, 60);
+
+        // Draw text
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 30px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(letter.toUpperCase(), 30, 30);
+
+        // Convert to very small JPEG
+        return canvas.toDataURL('image/jpeg', 0.01);
+    };
+
     const onSubmit = async (values: z.infer<typeof profileSchema>) => {
         setIsLoading(true);
+        let successMessages = [];
+        let retryWithFallback = false;
+
         try {
-            const updateData = {
-                name: values.name,
-                profileImage: profileImage || undefined
-            };
+            // Handle profile updates in two separate steps for reliability:
+            // 1. First update name if changed
+            if (values.name !== profileData?.name) {
+                console.log('Updating name to:', values.name);
 
-            await updateUserProfile(updateData);
+                try {
+                    await updateUserProfile({ name: values.name });
 
-            // Update local storage with new name
-            const currentName = localStorage.getItem('userName');
-            if (currentName && values.name !== currentName) {
-                localStorage.setItem('userName', values.name);
+                    // Update local storage with new name
+                    const currentName = localStorage.getItem('userName');
+                    if (currentName && values.name !== currentName) {
+                        localStorage.setItem('userName', values.name);
+                    }
+
+                    successMessages.push('Name updated successfully');
+                } catch (nameError: any) {
+                    console.error('Error updating name:', nameError);
+                    toast({
+                        title: 'Name update failed',
+                        description: nameError.message || 'Failed to update your name',
+                        variant: 'destructive',
+                    });
+                }
             }
 
-            toast({
-                title: 'Account updated',
-                description: 'Your account settings have been updated successfully',
-            });
+            // 2. Then update profile image if changed
+            const hasNewImage = profileImage !== profileData?.profileImage;
+            if (hasNewImage && profileImage) {
+                console.log('Updating profile image...');
+                console.log(`Image size: ${Math.round(profileImage.length / 1024)}KB`);
 
-            // Dispatch a profile updated event
-            window.dispatchEvent(new Event('profileUpdated'));
+                try {
+                    // Use the dedicated profile image update function
+                    await updateProfileImage(profileImage);
 
-            onClose();
-        } catch (error) {
-            console.error('Error updating profile:', error);
+                    // Dispatch a profile updated event
+                    window.dispatchEvent(new Event('profileUpdated'));
+
+                    successMessages.push('Profile image updated successfully');
+                } catch (imageError: any) {
+                    console.error('Error updating profile image:', imageError);
+
+                    // Check if it's the request entity too large error
+                    const isTooLarge =
+                        imageError.message?.includes('too large') ||
+                        imageError.message?.includes('entity') ||
+                        imageError.message?.includes('size');
+
+                    if (isTooLarge) {
+                        // Try our extreme fallback option - create a text-based avatar
+                        retryWithFallback = true;
+
+                        toast({
+                            title: 'Trying alternative method',
+                            description: 'Image is too large, using a simple letter avatar instead',
+                        });
+                    } else {
+                        // Show regular error for other issues
+                        toast({
+                            title: 'Image update failed',
+                            description: imageError.message || 'Failed to update profile image',
+                            variant: 'destructive',
+                        });
+                    }
+                }
+
+                // If the standard method failed due to size limits, try fallback
+                if (retryWithFallback) {
+                    try {
+                        console.log('Trying fallback letter avatar...');
+                        // Create a tiny text avatar with first letter
+                        const letter = values.name?.charAt(0) || 'U';
+                        const tinyAvatar = createTinyAvatar(letter);
+
+                        if (tinyAvatar) {
+                            console.log(`Tiny letter avatar size: ${Math.round(tinyAvatar.length / 1024)}KB`);
+                            await updateProfileImage(tinyAvatar);
+
+                            // Update UI
+                            window.dispatchEvent(new Event('profileUpdated'));
+                            successMessages.push('Simple avatar created successfully');
+                        }
+                    } catch (fallbackError) {
+                        console.error('Fallback avatar also failed:', fallbackError);
+                        toast({
+                            title: 'Image update failed',
+                            description: 'Could not update profile image, even with fallback method',
+                            variant: 'destructive',
+                        });
+                    }
+                }
+            }
+
+            // Show success message if any of the updates succeeded
+            if (successMessages.length > 0) {
+                toast({
+                    title: 'Account updated',
+                    description: successMessages.join('. '),
+                });
+                onClose();
+            } else if (!hasNewImage && values.name === profileData?.name) {
+                toast({
+                    title: 'No changes',
+                    description: 'No changes were detected to save',
+                });
+                onClose();
+            }
+        } catch (error: any) {
+            console.error('Unexpected error in profile update:', error);
             toast({
                 title: 'Update failed',
-                description: 'Failed to update your account settings',
+                description: 'An unexpected error occurred. Please try again.',
                 variant: 'destructive',
             });
         } finally {
@@ -150,7 +262,8 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ isOpen, onClose }) =>
         }
     };
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Then modify the handleImageUpload function to use compression for large images
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
@@ -167,14 +280,99 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ isOpen, onClose }) =>
             return;
         }
 
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            if (event.target?.result) {
-                setProfileImage(event.target.result as string);
+        try {
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                if (event.target?.result) {
+                    const originalImage = event.target.result as string;
+
+                    // For debugging
+                    console.log(`Original image size: ${Math.round(originalImage.length / 1024)}KB`);
+
+                    try {
+                        // Apply better balanced compression
+                        const img = new Image();
+                        img.src = originalImage;
+
+                        await new Promise<void>((resolve) => {
+                            img.onload = () => resolve();
+                        });
+
+                        // Create a medium-sized canvas - 300px max width/height for better quality
+                        const canvas = document.createElement('canvas');
+                        const MAX_DIM = 300;
+                        const scale = Math.min(MAX_DIM / img.width, MAX_DIM / img.height);
+                        canvas.width = Math.floor(img.width * scale);
+                        canvas.height = Math.floor(img.height * scale);
+
+                        const ctx = canvas.getContext('2d');
+                        if (!ctx) throw new Error('Could not get canvas context');
+
+                        // Draw image with high quality smoothing
+                        ctx.imageSmoothingQuality = 'high';
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                        // Start with better quality (40%)
+                        let compressedImage = canvas.toDataURL('image/jpeg', 0.4);
+                        let imageSize = Math.round(compressedImage.length / 1024);
+                        console.log(`Medium quality image (300px, 0.4 quality): ${imageSize}KB`);
+
+                        // Only reduce quality if the image is too large
+                        if (imageSize > 60) {
+                            // Try with slightly lower quality (25%)
+                            compressedImage = canvas.toDataURL('image/jpeg', 0.25);
+                            imageSize = Math.round(compressedImage.length / 1024);
+                            console.log(`Lower quality image (300px, 0.25 quality): ${imageSize}KB`);
+
+                            // If still too large, reduce dimensions and quality more
+                            if (imageSize > 40) {
+                                // Reduce dimensions to 200px
+                                canvas.width = 200;
+                                canvas.height = 200 * (canvas.height / canvas.width);
+                                ctx.imageSmoothingQuality = 'high';
+                                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                                compressedImage = canvas.toDataURL('image/jpeg', 0.2);
+                                imageSize = Math.round(compressedImage.length / 1024);
+                                console.log(`Small image (200px, 0.2 quality): ${imageSize}KB`);
+                            }
+                        }
+
+                        // Set the image in state
+                        setProfileImage(compressedImage);
+                        toast({
+                            title: 'Image processed',
+                            description: 'Image prepared for upload with balanced quality.',
+                        });
+                    } catch (compressionError) {
+                        console.error('Error compressing image:', compressionError);
+                        toast({
+                            title: 'Image processing error',
+                            description: 'Failed to process the image. Please try a different one.',
+                            variant: 'destructive',
+                        });
+                    }
+                }
                 setIsUploading(false);
-            }
-        };
-        reader.readAsDataURL(file);
+            };
+            reader.onerror = () => {
+                toast({
+                    title: 'Error',
+                    description: 'Failed to read image file',
+                    variant: 'destructive',
+                });
+                setIsUploading(false);
+            };
+            reader.readAsDataURL(file);
+        } catch (error) {
+            console.error('Error processing image:', error);
+            toast({
+                title: 'Error',
+                description: 'An unexpected error occurred while processing the image',
+                variant: 'destructive',
+            });
+            setIsUploading(false);
+        }
     };
 
     const removeProfileImage = () => {
