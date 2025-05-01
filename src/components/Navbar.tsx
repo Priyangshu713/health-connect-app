@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Heart, User, Apple, Bot, Menu, X, Info, LogIn, LogOut, History, UserRound } from 'lucide-react';
+import { Heart, User, Apple, Bot, Menu, X, Info, LogIn, LogOut, History, UserRound, Settings } from 'lucide-react';
 import { useHealthStore } from '@/store/healthStore';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { dispatchAuthEvent } from '@/App';
 import DoctorMenuNavigation from './DoctorMenuNavigation';
+import AccountSettings from '@/components/settings/AccountSettings';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,6 +38,7 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [showAccountSettings, setShowAccountSettings] = useState(false);
 
   const isHomePage = location.pathname === '/';
   const showNavbar = !isHomePage || isScrolled;
@@ -317,9 +319,9 @@ const Navbar = () => {
                     )}
                   </div>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="cursor-pointer" onClick={() => navigate(isDoctorUser ? '/doctor-portal' : '/profile')}>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>{isDoctorUser ? 'Doctor Portal' : 'Profile'}</span>
+                  <DropdownMenuItem className="cursor-pointer" onClick={() => isDoctorUser ? navigate('/doctor-portal') : setShowAccountSettings(true)}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>{isDoctorUser ? 'Doctor Portal' : 'Account Settings'}</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/history')}>
                     <History className="mr-2 h-4 w-4" />
@@ -469,6 +471,16 @@ const Navbar = () => {
                 <span>Sign Out</span>
               </Button>
             )}
+
+            {isAuthenticated && !isDoctorUser && (
+              <div
+                onClick={() => setShowAccountSettings(true)}
+                className="px-4 py-3 rounded-xl flex items-center space-x-3 hover:bg-accent mobile-touch-target cursor-pointer"
+              >
+                <Settings className="h-5 w-5 text-primary" />
+                <span>Account Settings</span>
+              </div>
+            )}
           </div>
         </MobileBottomSheet>
       )}
@@ -598,9 +610,26 @@ const Navbar = () => {
                 <span>Sign Out</span>
               </Button>
             )}
+
+            {isAuthenticated && !isDoctorUser && (
+              <div
+                onClick={() => setShowAccountSettings(true)}
+                className="px-4 py-3 rounded-xl flex items-center space-x-3 hover:bg-accent mobile-touch-target cursor-pointer"
+              >
+                <Settings className="h-5 w-5 text-primary" />
+                <span>Account Settings</span>
+              </div>
+            )}
           </div>
         </div>
       </>
+
+      {showAccountSettings && (
+        <AccountSettings
+          isOpen={showAccountSettings}
+          onClose={() => setShowAccountSettings(false)}
+        />
+      )}
     </nav>
   );
 };
