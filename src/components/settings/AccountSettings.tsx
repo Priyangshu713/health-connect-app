@@ -134,6 +134,9 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ isOpen, onClose }) =>
                 description: 'Your account settings have been updated successfully',
             });
 
+            // Dispatch a profile updated event
+            window.dispatchEvent(new Event('profileUpdated'));
+
             onClose();
         } catch (error) {
             console.error('Error updating profile:', error);
