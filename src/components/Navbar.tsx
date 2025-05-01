@@ -6,10 +6,11 @@ import { useHealthStore } from '@/store/healthStore';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useToast } from '@/components/ui/use-toast';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { dispatchAuthEvent } from '@/App';
 import DoctorMenuNavigation from './DoctorMenuNavigation';
 import AccountSettings from '@/components/settings/AccountSettings';
+import { getUserProfile } from '@/api/auth';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,6 +40,8 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [showAccountSettings, setShowAccountSettings] = useState(false);
+  const [userProfileImage, setUserProfileImage] = useState<string | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
 
   const isHomePage = location.pathname === '/';
   const showNavbar = !isHomePage || isScrolled;
@@ -167,6 +170,7 @@ const Navbar = () => {
 
     setIsAuthenticated(false);
     setUserEmail('');
+    setUserProfileImage(null);
 
     toast({
       title: "Signed out",
@@ -226,6 +230,54 @@ const Navbar = () => {
     { path: '/about', label: 'About Us', icon: <Info className="mr-2 h-4 w-4" /> },
     ...(isDoctorUser ? [{ path: '/doctor-portal', label: 'Doctor Portal', icon: <UserRound className="mr-2 h-4 w-4" /> }] : []),
   ];
+
+  // Load user profile data including profile image
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      if (!isAuthenticated || !localStorage.getItem('token')) return;
+
+      setLoadingProfile(true);
+      try {
+        const data = await getUserProfile();
+        if (data.profileImage) {
+          setUserProfileImage(data.profileImage);
+        }
+      } catch (error) {
+        console.error('Error fetching user profile image:', error);
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+
+    fetchProfileData();
+  }, [isAuthenticated]);
+
+  // Listen for profile updates
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      const fetchProfileImage = async () => {
+        if (!isAuthenticated) return;
+
+        try {
+          const data = await getUserProfile();
+          if (data.profileImage) {
+            setUserProfileImage(data.profileImage);
+          } else {
+            setUserProfileImage(null);
+          }
+        } catch (error) {
+          console.error('Error fetching user profile image on update:', error);
+        }
+      };
+
+      fetchProfileImage();
+    };
+
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+    return () => {
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
+  }, [isAuthenticated]);
 
   return (
     <nav
@@ -304,7 +356,11 @@ const Navbar = () => {
                     aria-label="User menu"
                   >
                     <Avatar className="h-8 w-8 bg-primary text-white">
-                      <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                      {userProfileImage ? (
+                        <AvatarImage src={userProfileImage} alt="Profile" />
+                      ) : (
+                        <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                      )}
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
@@ -389,7 +445,11 @@ const Navbar = () => {
               <>
                 <div className="flex items-center space-x-3 px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl mb-2">
                   <Avatar className="h-10 w-10 bg-primary text-white">
-                    <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                    {userProfileImage ? (
+                      <AvatarImage src={userProfileImage} alt="Profile" />
+                    ) : (
+                      <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                    )}
                   </Avatar>
                   <div className="flex flex-col">
                     <p className="text-sm font-medium">{getUserName()}</p>
@@ -528,7 +588,11 @@ const Navbar = () => {
               <>
                 <div className="flex items-center space-x-3 px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl mb-2">
                   <Avatar className="h-10 w-10 bg-primary text-white">
-                    <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                    {userProfileImage ? (
+                      <AvatarImage src={userProfileImage} alt="Profile" />
+                    ) : (
+                      <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                    )}
                   </Avatar>
                   <div className="flex flex-col">
                     <p className="text-sm font-medium">{getUserName()}</p>
