@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Bot, Send, Sparkles, Brain } from "lucide-react";
+import { Bot, Send, Sparkles, Brain, ChevronDown, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { createGeminiChatSession } from '@/services/GeminiChatService';
@@ -14,6 +14,7 @@ interface Message {
   text: string;
   sender: 'user' | 'bot';
   thinking?: string[];
+  thinkingTime?: number;
 }
 
 interface ChatBotProps {
@@ -45,6 +46,8 @@ const ChatBot: React.FC<ChatBotProps> = ({ useGemini: initialUseGemini, geminiTi
     geminiModel === 'gemini-2.5-pro-exp-03-25';
   const canUseSelectedModel = isPaidUser && (!isPremiumModel || currentGeminiTier === 'pro');
 
+  const [expandedMessages, setExpandedMessages] = useState<Record<string, boolean>>({});
+
   useEffect(() => {
     if (isPaidUser && geminiApiKey) {
       setUseGemini(true);
@@ -59,6 +62,13 @@ const ChatBot: React.FC<ChatBotProps> = ({ useGemini: initialUseGemini, geminiTi
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const toggleThinking = (messageId: string) => {
+    setExpandedMessages(prev => ({
+      ...prev,
+      [messageId]: !prev[messageId]
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -97,12 +107,17 @@ const ChatBot: React.FC<ChatBotProps> = ({ useGemini: initialUseGemini, geminiTi
     setInput('');
     setIsLoading(true);
 
+    const startTime = Date.now();
+
     try {
       let response;
 
       if (useGemini && geminiApiKey && canUseSelectedModel) {
         const geminiSession = createGeminiChatSession(geminiApiKey, geminiModel);
         const geminiResponse = await geminiSession.sendMessage(input);
+
+        const endTime = Date.now();
+        const thinkingTime = endTime - startTime;
 
         if (isThinkingModel && geminiResponse.thinking) {
           const thinkingArray = geminiResponse.thinking
@@ -114,7 +129,8 @@ const ChatBot: React.FC<ChatBotProps> = ({ useGemini: initialUseGemini, geminiTi
 
           response = {
             text: geminiResponse.text,
-            thinking: thinkingArray
+            thinking: thinkingArray,
+            thinkingTime: thinkingTime
           };
         } else {
           response = {
@@ -139,21 +155,31 @@ const ChatBot: React.FC<ChatBotProps> = ({ useGemini: initialUseGemini, geminiTi
         }
       }
 
+      const botMessageId = Date.now().toString();
+
+      if (isThinkingModel && response.thinking) {
+        setExpandedMessages(prev => ({
+          ...prev,
+          [botMessageId]: false
+        }));
+      }
+
       if (isThinkingModel && response.thinking) {
         setMessages(prev => [
           ...prev,
           {
-            id: Date.now().toString(),
+            id: botMessageId,
             text: response.text,
             sender: 'bot',
-            thinking: response.thinking
+            thinking: response.thinking,
+            thinkingTime: response.thinkingTime
           }
         ]);
       } else {
         setMessages(prev => [
           ...prev,
           {
-            id: Date.now().toString(),
+            id: botMessageId,
             text: response.text,
             sender: 'bot'
           }
@@ -227,6 +253,11 @@ const ChatBot: React.FC<ChatBotProps> = ({ useGemini: initialUseGemini, geminiTi
     }
   };
 
+  const formatThinkingTime = (ms: number) => {
+    if (ms < 1000) return `${ms}ms`;
+    return `${(ms / 1000).toFixed(1)}s`;
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto p-4">
@@ -262,26 +293,40 @@ const ChatBot: React.FC<ChatBotProps> = ({ useGemini: initialUseGemini, geminiTi
                     <div className="text-sm prose-sm max-w-none">
                       {message.thinking && message.thinking.length > 0 && (
                         <div className="mb-4">
-                          <div className="bg-primary/5 p-3 rounded-md border border-primary/10 mb-2">
-                            <div className="flex items-center gap-1 text-xs text-primary mb-2 font-medium">
+                          <button
+                            onClick={() => toggleThinking(message.id)}
+                            className="flex items-center justify-between w-full mb-2 p-2 bg-primary/10 hover:bg-primary/15 rounded-md transition-colors"
+                          >
+                            <div className="flex items-center gap-1 text-xs text-primary font-medium">
                               <Brain className="h-3 w-3" />
-                              <span>Thinking Process</span>
+                              <span>Thought for {message.thinkingTime ? formatThinkingTime(message.thinkingTime) : '?'}</span>
                             </div>
-                            <div className="text-xs space-y-2">
-                              {message.thinking.map((thought, index) => (
-                                <div key={index} className="text-muted-foreground">
-                                  {thought.trim().startsWith('-') || thought.trim().startsWith('*') ? (
-                                    <div className="ml-4">• {thought.replace(/^[\-\*]\s+/, '')}</div>
-                                  ) : (
-                                    <>
-                                      <span className="text-primary font-medium">Step {index + 1}:</span> {thought}
-                                    </>
-                                  )}
-                                </div>
-                              ))}
+                            {expandedMessages[message.id] ? (
+                              <ChevronUp className="h-3 w-3 text-primary" />
+                            ) : (
+                              <ChevronDown className="h-3 w-3 text-primary" />
+                            )}
+                          </button>
+
+                          {expandedMessages[message.id] && (
+                            <div className="bg-primary/5 p-3 rounded-md border border-primary/10 mb-2 animate-in fade-in-50 duration-150">
+                              <div className="text-xs space-y-2">
+                                {message.thinking.map((thought, index) => (
+                                  <div key={index} className="text-muted-foreground">
+                                    {thought.trim().startsWith('-') || thought.trim().startsWith('*') ? (
+                                      <div className="ml-4">• {thought.replace(/^[\-\*]\s+/, '')}</div>
+                                    ) : (
+                                      <>
+                                        <span className="text-primary font-medium">Step {index + 1}:</span> {thought}
+                                      </>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                          <div className="border-t border-primary/10 pt-3 mt-3">
+                          )}
+
+                          <div className="border-t border-primary/10 pt-3 mt-1">
                             <div className="font-medium text-sm mb-2">Answer:</div>
                             {formatMessageText(message.text)}
                           </div>
