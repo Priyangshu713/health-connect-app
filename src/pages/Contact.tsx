@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import emailjs from '@emailjs/browser';
+import { useNavigate } from 'react-router-dom';
 
 // Replace with your actual EmailJS service IDs
 const SERVICE_ID = 'service_3y2vg5n';
@@ -29,6 +30,7 @@ const ContactPage = () => {
         subject: '',
         message: ''
     });
+    const navigate = useNavigate();
 
     // Initialize EmailJS when component mounts
     useEffect(() => {
@@ -322,6 +324,31 @@ const ContactPage = () => {
                                     </p>
                                 </CardContent>
                             </Card>
+                        </div>
+                    </motion.section>
+
+                    {/* Legal Links Section */}
+                    <motion.section variants={itemVariants} className="mt-16 text-center">
+                        <Separator className="bg-primary/10 mb-8" />
+                        <h2 className="text-xl font-semibold mb-4">Legal Information</h2>
+                        <p className="text-muted-foreground mb-6">
+                            For detailed information about how we use your data and our service terms, please review our legal documents.
+                        </p>
+                        <div className="flex justify-center space-x-6">
+                            <Button
+                                variant="outline"
+                                className="border-primary/20 hover:border-primary transition-all duration-300"
+                                onClick={() => navigate('/terms-privacy?tab=terms')}
+                            >
+                                Terms of Service
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="border-primary/20 hover:border-primary transition-all duration-300"
+                                onClick={() => navigate('/terms-privacy?tab=privacy')}
+                            >
+                                Privacy Policy
+                            </Button>
                         </div>
                     </motion.section>
                 </motion.div>
