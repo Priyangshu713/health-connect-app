@@ -1,4 +1,3 @@
-
 import { FoodSearchInfo } from '@/components/nutrition/FoodSearchResults';
 import { getFoodNutritionInfoFromGemini } from '@/services/NutritionGeminiService';
 import { GeminiModelType } from '@/store/healthStore';
@@ -11,7 +10,7 @@ export const searchFoodHealth = async (
   try {
     // First check if the input is actually a food item
     const isFoodResult = await checkIfFoodItem(foodName, apiKey, modelType);
-    
+
     if (!isFoodResult.isFood) {
       // Return non-food response
       return {
@@ -24,21 +23,22 @@ export const searchFoodHealth = async (
         isVegan: false,
         ingredients: isFoodResult.components || ["Not edible"],
         healthImplications: [
-          "Not a food item - not meant for consumption", 
+          "Not a food item - not meant for consumption",
           "Could be harmful if ingested",
           "No nutritional value",
           "Please search for actual food items for nutritional information"
         ],
-        benefitsInfo: []
+        benefitsInfo: [],
+        isNonFood: true
       };
     }
-    
+
     // If it is a food item, proceed with normal processing
     const nutritionInfo = await getFoodNutritionInfoFromGemini(foodName, apiKey, modelType);
-    
+
     // Then get additional health categorization from Gemini
     const healthInfo = await getHealthCategorization(foodName, apiKey, modelType);
-    
+
     // Combine the information
     return {
       name: nutritionInfo.name,
@@ -50,7 +50,8 @@ export const searchFoodHealth = async (
       isVegan: nutritionInfo.isVegan,
       ingredients: healthInfo.ingredients,
       healthImplications: healthInfo.healthImplications,
-      benefitsInfo: healthInfo.benefits ? healthInfo.benefits.split('. ').filter(b => b.trim()) : []
+      benefitsInfo: healthInfo.benefits ? healthInfo.benefits.split('. ').filter(b => b.trim()) : [],
+      isNonFood: false
     };
   } catch (error) {
     console.error('Error searching food health:', error);
@@ -71,13 +72,13 @@ const checkIfFoodItem = async (
   try {
     // Import GoogleGenerativeAI dynamically to avoid SSR issues
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
-    
+
     const genAI = new GoogleGenerativeAI(apiKey);
-    
+
     const model = genAI.getGenerativeModel({
       model: modelType,
     });
-    
+
     const prompt = `
       You are a food identification expert. For the following item, determine if it is a food item that humans consume as nutrition:
       
@@ -101,22 +102,22 @@ const checkIfFoodItem = async (
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
-    
+
     // Parse the response
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       throw new Error("Invalid response format");
     }
-    
+
     const parsedData = JSON.parse(jsonMatch[0]);
-    
+
     return {
       isFood: parsedData.isFood === true,
       components: Array.isArray(parsedData.components) ? parsedData.components : undefined
     };
   } catch (error) {
     console.error("Error in food identification:", error);
-    
+
     // Default to assuming it's food in case of error to avoid false negatives
     return { isFood: true };
   }
@@ -137,13 +138,13 @@ const getHealthCategorization = async (
   try {
     // Import GoogleGenerativeAI dynamically to avoid SSR issues
     const { GoogleGenerativeAI } = await import('@google/generative-ai');
-    
+
     const genAI = new GoogleGenerativeAI(apiKey);
-    
+
     const model = genAI.getGenerativeModel({
       model: modelType,
     });
-    
+
     const prompt = `
       As a nutrition expert, analyze the following food item: "${foodName}"
       
@@ -167,25 +168,25 @@ const getHealthCategorization = async (
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
-    
+
     // Parse the response
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       throw new Error("Invalid response format");
     }
-    
+
     const parsedData = JSON.parse(jsonMatch[0]);
-    
+
     return {
       category: parsedData.category || 'neutral',
       ingredients: Array.isArray(parsedData.ingredients) ? parsedData.ingredients : [],
-      healthImplications: Array.isArray(parsedData.healthImplications) ? parsedData.healthImplications : 
+      healthImplications: Array.isArray(parsedData.healthImplications) ? parsedData.healthImplications :
         ["Information not available"],
       benefits: parsedData.benefits || "Information not available"
     };
   } catch (error) {
     console.error("Error in health categorization:", error);
-    
+
     // Return default fallback data
     return {
       category: 'neutral',
