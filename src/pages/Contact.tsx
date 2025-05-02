@@ -435,8 +435,8 @@ const ContactPage = () => {
                                                     <Mail className="h-5 w-5 text-primary" />
                                                 </motion.div>
                                                 <h3 className="font-semibold text-lg mb-1">Email Us</h3>
-                                                <p className="text-muted-foreground">support@healthconnect.com</p>
-                                                <p className="text-muted-foreground">info@healthconnect.com</p>
+                                                <p className="text-muted-foreground break-words">support@healthconnect.com</p>
+                                                <p className="text-muted-foreground break-words">info@healthconnect.com</p>
                                             </CardContent>
                                         </Card>
 
@@ -471,8 +471,8 @@ const ContactPage = () => {
                                                     <MapPin className="h-5 w-5 text-health-pink" />
                                                 </motion.div>
                                                 <h3 className="font-semibold text-lg mb-1">Visit Us</h3>
-                                                <p className="text-muted-foreground">123 Health Street</p>
-                                                <p className="text-muted-foreground">Wellness City, 10001</p>
+                                                <p className="text-muted-foreground">Global Institute of Science & Technology</p>
+                                                <p className="text-muted-foreground">ICARE Complex, Hatiberia, Purba Medinipur, Haldia, West Bengal 721657, India</p>
                                             </CardContent>
                                         </Card>
                                     </div>
@@ -508,15 +508,17 @@ const ContactPage = () => {
 
                                     {/* Map placeholder - in a real app, you'd integrate Google Maps or similar */}
                                     <div className="relative h-64 rounded-lg overflow-hidden border border-muted mt-8">
-                                        <div className="absolute inset-0 bg-muted/20 flex items-center justify-center">
-                                            <div className="text-center">
-                                                <MapPin className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                                                <p className="text-muted-foreground font-medium">Interactive map would appear here</p>
-                                                <Button variant="link" className="mt-2">
-                                                    Get Directions
-                                                </Button>
-                                            </div>
-                                        </div>
+                                        <iframe
+                                            title="Global Institute of Science & Technology Map"
+                                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3683.234393137469!2d88.0716585!3d22.0525575!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a02f0bc41d7ef07%3A0xf2ec43b8223e132!2sGlobal%20Institute%20of%20Science%20%26%20Technology!5e0!3m2!1sen!2sin!4v1718030000000!5m2!1sen!2sin"
+                                            width="100%"
+                                            height="100%"
+                                            style={{ border: 0 }}
+                                            allowFullScreen={true}
+                                            loading="lazy"
+                                            referrerPolicy="no-referrer-when-downgrade"
+                                            className="absolute inset-0 w-full h-full"
+                                        ></iframe>
                                     </div>
                                 </motion.div>
                             </TabsContent>
