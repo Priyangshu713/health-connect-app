@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
 import { useState, useEffect, useRef } from 'react';
 import { Analytics } from "@vercel/analytics/react"; // Import Analytics
+import { toast } from "@/components/ui/use-toast";
 import Navbar from './components/Navbar';
 import Index from './pages/Index';
 import Profile from './pages/Profile';
@@ -20,7 +21,7 @@ import Contact from './pages/Contact';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import './App.css';
-import { synchronizeTier } from '@/api/auth';
+import { synchronizeTier, logoutUser } from '@/api/auth';
 
 export const dispatchAuthEvent = (isAuthenticated: boolean, email?: string) => {
   const event = new CustomEvent('authStateChanged', {
@@ -61,6 +62,30 @@ function App() {
     // Check if user is authenticated
     const isAuth = localStorage.getItem('isAuthenticated') === 'true';
     const token = localStorage.getItem('token');
+    const userEmail = localStorage.getItem('userEmail');
+
+    // Check if this account has been marked as deleted
+    if (isAuth && userEmail) {
+      try {
+        const deletedAccounts = JSON.parse(localStorage.getItem('healthconnect_deleted_accounts') || '[]');
+        if (deletedAccounts.includes(userEmail)) {
+          console.warn('Detected login with previously deleted account:', userEmail);
+          // Force logout
+          logoutUser();
+          // Display message
+          setTimeout(() => {
+            toast({
+              title: "Account Deleted",
+              description: "This account has been deleted. Please create a new account to continue.",
+              variant: "destructive",
+            });
+          }, 1000); // Slight delay to ensure toast system is ready
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking for deleted accounts:', error);
+      }
+    }
 
     // If authenticated, synchronize tier with backend
     if (isAuth && token) {
