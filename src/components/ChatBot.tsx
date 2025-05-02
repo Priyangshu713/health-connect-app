@@ -1,9 +1,8 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Bot, Send, Sparkles } from "lucide-react";
+import { Bot, Send, Sparkles, Brain } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { createGeminiChatSession } from '@/services/GeminiChatService';
@@ -41,11 +40,11 @@ const ChatBot: React.FC<ChatBotProps> = ({ useGemini: initialUseGemini, geminiTi
   const currentGeminiTier = healthStore.geminiTier;
   const isThinkingModel = geminiModel.includes('thinking') || geminiModel === 'gemini-2.5-pro-exp-03-25';
   const isPaidUser = currentGeminiTier === 'lite' || currentGeminiTier === 'pro';
-  const isPremiumModel = geminiModel === 'gemini-2.0-pro-exp-02-05' || 
-                         geminiModel === 'gemini-2.0-flash-thinking-exp-01-21' || 
-                         geminiModel === 'gemini-2.5-pro-exp-03-25';
+  const isPremiumModel = geminiModel === 'gemini-2.0-pro-exp-02-05' ||
+    geminiModel === 'gemini-2.0-flash-thinking-exp-01-21' ||
+    geminiModel === 'gemini-2.5-pro-exp-03-25';
   const canUseSelectedModel = isPaidUser && (!isPremiumModel || currentGeminiTier === 'pro');
-  
+
   useEffect(() => {
     if (isPaidUser && geminiApiKey) {
       setUseGemini(true);
@@ -53,63 +52,64 @@ const ChatBot: React.FC<ChatBotProps> = ({ useGemini: initialUseGemini, geminiTi
       setUseGemini(false);
     }
   }, [isPaidUser, geminiApiKey]);
-  
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-  
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!input.trim()) return;
-    
+
     if (isPremiumModel && currentGeminiTier !== 'pro') {
       toast({
         title: "Premium Model Restricted",
         description: "You need to upgrade to Pro tier to use this premium model",
         variant: "destructive",
       });
-      
+
       if (onRequestUpgrade) {
         onRequestUpgrade();
       }
       return;
     }
-    
+
     if (currentGeminiTier === 'free' && useGemini) {
       if (onRequestUpgrade) {
         onRequestUpgrade();
       }
       return;
     }
-    
+
     const userMessageId = Date.now().toString();
     const userMessage: Message = {
       id: userMessageId,
       text: input,
       sender: 'user',
     };
-    
+
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
-    
+
     try {
       let response;
-      
+
       if (useGemini && geminiApiKey && canUseSelectedModel) {
         const geminiSession = createGeminiChatSession(geminiApiKey, geminiModel);
         const geminiResponse = await geminiSession.sendMessage(input);
-        
+
         if (isThinkingModel && geminiResponse.thinking) {
           const thinkingArray = geminiResponse.thinking
-            .split(/\n(?=\d+\.|\*|\-|\(\d+\))/)
-            .filter(item => item.trim().length > 0);
-          
+            .split(/\n(?=\d+\.|\*|\-|\(\d+\)|Step \d+:)/)
+            .filter(item => item.trim().length > 0)
+            .map(item => item.trim());
+
           response = {
             text: geminiResponse.text,
             thinking: thinkingArray
@@ -136,7 +136,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ useGemini: initialUseGemini, geminiTi
           response = await simulateResponse(input);
         }
       }
-      
+
       if (isThinkingModel && response.thinking) {
         setMessages(prev => [
           ...prev,
@@ -164,7 +164,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ useGemini: initialUseGemini, geminiTi
         description: "Failed to generate a response. Please try again.",
         variant: "destructive",
       });
-      
+
       setMessages(prev => [
         ...prev,
         {
@@ -177,12 +177,12 @@ const ChatBot: React.FC<ChatBotProps> = ({ useGemini: initialUseGemini, geminiTi
       setIsLoading(false);
     }
   };
-  
+
   const simulateResponse = async (query: string): Promise<{ text: string, thinking?: string[] }> => {
     return new Promise(resolve => {
       setTimeout(() => {
         const lowerQuery = query.toLowerCase();
-        
+
         if (lowerQuery.includes('headache') || lowerQuery.includes('head pain')) {
           resolve({
             text: "Headaches can be caused by various factors such as stress, dehydration, lack of sleep, or eye strain. For occasional headaches, rest, hydration, and over-the-counter pain relievers may help. If you're experiencing severe or recurring headaches, it's best to consult a healthcare professional.",
@@ -211,7 +211,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ useGemini: initialUseGemini, geminiTi
       }, 1000);
     });
   };
-  
+
   const formatMessageText = (text: string) => {
     if (text.includes('<') && text.includes('>')) {
       return <div dangerouslySetInnerHTML={{ __html: text }} />;
@@ -224,7 +224,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ useGemini: initialUseGemini, geminiTi
       ));
     }
   };
-  
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto p-4">
@@ -242,9 +242,9 @@ const ChatBot: React.FC<ChatBotProps> = ({ useGemini: initialUseGemini, geminiTi
                   <Avatar className={message.sender === 'user' ? 'bg-primary/10' : 'bg-muted'}>
                     <AvatarFallback>{message.sender === 'user' ? 'U' : 'AI'}</AvatarFallback>
                     {message.sender === 'bot' && (
-                      <AvatarImage 
-                        src="/lovable-uploads/d0d800ca-f073-4663-a228-b3dca4178d45.png" 
-                        alt="AI Bot" 
+                      <AvatarImage
+                        src="/lovable-uploads/d0d800ca-f073-4663-a228-b3dca4178d45.png"
+                        alt="AI Bot"
                         onError={(e) => {
                           e.currentTarget.onerror = null;
                           e.currentTarget.src = '/lovable-uploads/85e10dd8-810c-44de-8661-df3911e610ce.png';
@@ -252,25 +252,50 @@ const ChatBot: React.FC<ChatBotProps> = ({ useGemini: initialUseGemini, geminiTi
                       />
                     )}
                   </Avatar>
-                  
-                  <div className={`rounded-lg p-3 ${
-                    message.sender === 'user' 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'bg-muted'
-                  }`}>
+
+                  <div className={`rounded-lg p-3 ${message.sender === 'user'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted'
+                    }`}>
                     <div className="text-sm prose-sm max-w-none">
-                      {formatMessageText(message.text)}
+                      {message.thinking && message.thinking.length > 0 && (
+                        <div className="mb-4">
+                          <div className="bg-primary/5 p-3 rounded-md border border-primary/10 mb-2">
+                            <div className="flex items-center gap-1 text-xs text-primary mb-2 font-medium">
+                              <Brain className="h-3 w-3" />
+                              <span>Thinking Process</span>
+                            </div>
+                            <div className="text-xs space-y-2">
+                              {message.thinking.map((thought, index) => (
+                                <div key={index} className="text-muted-foreground">
+                                  {thought.trim().startsWith('-') || thought.trim().startsWith('*') ? (
+                                    <div className="ml-4">• {thought.replace(/^[\-\*]\s+/, '')}</div>
+                                  ) : (
+                                    <>
+                                      <span className="text-primary font-medium">Step {index + 1}:</span> {thought}
+                                    </>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="border-t border-primary/10 pt-3 mt-3">
+                            <div className="font-medium text-sm mb-2">Answer:</div>
+                            {formatMessageText(message.text)}
+                          </div>
+                        </div>
+                      )}
+
+                      {(!message.thinking || message.thinking.length === 0) && (
+                        formatMessageText(message.text)
+                      )}
                     </div>
-                    
-                    {message.thinking && message.thinking.length > 0 && (
-                      <ThinkingModel thinking={message.thinking} />
-                    )}
                   </div>
                 </div>
               </motion.div>
             ))}
           </AnimatePresence>
-          
+
           {isLoading && (
             <motion.div
               initial={{ opacity: 0 }}
@@ -280,9 +305,9 @@ const ChatBot: React.FC<ChatBotProps> = ({ useGemini: initialUseGemini, geminiTi
               <div className="flex gap-3 max-w-[80%]">
                 <Avatar className="bg-muted">
                   <AvatarFallback>AI</AvatarFallback>
-                  <AvatarImage 
-                    src="/lovable-uploads/85e10dd8-810c-44de-8661-df3911e610ce.png" 
-                    alt="AI Bot" 
+                  <AvatarImage
+                    src="/lovable-uploads/85e10dd8-810c-44de-8661-df3911e610ce.png"
+                    alt="AI Bot"
                     onError={(e) => {
                       e.currentTarget.onerror = null;
                       e.currentTarget.src = '/path/to/default/bot/icon.png';
@@ -302,7 +327,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ useGemini: initialUseGemini, geminiTi
           <div ref={messagesEndRef} />
         </div>
       </div>
-      
+
       <div className="border-t p-4">
         <form onSubmit={handleSubmit} className="flex gap-2">
           <Input
@@ -312,16 +337,16 @@ const ChatBot: React.FC<ChatBotProps> = ({ useGemini: initialUseGemini, geminiTi
             disabled={isLoading || (!isPaidUser && useGemini)}
             className="flex-1"
           />
-          
+
           {isPaidUser ? (
             <Button type="submit" disabled={isLoading || !input.trim()}>
               <Send className="h-4 w-4" />
               <span className="sr-only">Send</span>
             </Button>
           ) : (
-            <Button 
-              type="button" 
-              onClick={onRequestUpgrade} 
+            <Button
+              type="button"
+              onClick={onRequestUpgrade}
               className="bg-amber-500 hover:bg-amber-600 text-white flex gap-2 px-4"
             >
               <Sparkles className="h-4 w-4" />
@@ -329,7 +354,7 @@ const ChatBot: React.FC<ChatBotProps> = ({ useGemini: initialUseGemini, geminiTi
             </Button>
           )}
         </form>
-        
+
         {!isPaidUser && (
           <p className="text-xs text-muted-foreground mt-2">
             <Bot className="h-3 w-3 inline mr-1" />
