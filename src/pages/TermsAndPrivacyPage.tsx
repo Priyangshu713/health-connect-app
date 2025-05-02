@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Heart, Lock, Shield, ArrowLeft } from 'lucide-react';
+import { Heart, Lock, Shield, ArrowLeft, Database } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -16,6 +16,8 @@ const TermsAndPrivacyPage = () => {
         const tabParam = searchParams.get('tab');
         if (tabParam === 'privacy') {
             setActiveTab('privacy');
+        } else if (tabParam === 'data') {
+            setActiveTab('data');
         }
     }, [location]);
 
@@ -63,9 +65,10 @@ const TermsAndPrivacyPage = () => {
 
             <motion.div variants={itemVariants} className="bg-white/95 backdrop-blur-sm rounded-lg border shadow-md p-6 mb-12">
                 <Tabs defaultValue="terms" value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid grid-cols-2 mb-6">
+                    <TabsList className="grid grid-cols-3 mb-6">
                         <TabsTrigger value="terms" className="text-lg">Terms of Service</TabsTrigger>
                         <TabsTrigger value="privacy" className="text-lg">Privacy Policy</TabsTrigger>
+                        <TabsTrigger value="data" className="text-lg">Data Processing</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="terms" className="space-y-6">
@@ -214,6 +217,121 @@ const TermsAndPrivacyPage = () => {
                                 <section>
                                     <h3 className="font-medium text-foreground mb-2">9. Contact Us</h3>
                                     <p>If you have any questions about this Privacy Policy, please contact us at privacy@healthconnect.com.</p>
+                                </section>
+                            </div>
+                        </motion.div>
+                    </TabsContent>
+
+                    <TabsContent value="data" className="space-y-6">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.5 }}
+                        >
+                            <h2 className="text-xl font-semibold mb-3 flex items-center gap-2">
+                                <Database className="h-5 w-5 text-primary" />
+                                Data Processing
+                            </h2>
+
+                            <div className="space-y-4 text-muted-foreground">
+                                <section>
+                                    <h3 className="font-medium text-foreground mb-2">1. General Principles</h3>
+                                    <p>HealthConnect processes your data in accordance with GDPR, HIPAA, and other applicable data protection regulations. We follow the principles of data minimization, purpose limitation, and transparency in all our data processing activities.</p>
+                                </section>
+
+                                <section>
+                                    <h3 className="font-medium text-foreground mb-2">2. Types of Data Processing</h3>
+                                    <p>We engage in the following data processing activities:</p>
+                                    <ul className="list-disc pl-5 space-y-1 mt-2">
+                                        <li><strong>Authentication processing:</strong> Verification of user credentials during login</li>
+                                        <li><strong>Local data storage:</strong> Facilitating the storage of health data on your device</li>
+                                        <li><strong>Analytics processing:</strong> Anonymous usage statistics to improve our service</li>
+                                        <li><strong>Account management:</strong> Processing related to account creation, maintenance, and deletion</li>
+                                    </ul>
+                                </section>
+
+                                <section>
+                                    <h3 className="font-medium text-foreground mb-2">3. Lawful Basis for Processing</h3>
+                                    <p>We process your data based on the following legal grounds:</p>
+                                    <ul className="list-disc pl-5 space-y-1 mt-2">
+                                        <li><strong>Contract performance:</strong> Processing necessary to provide you with our services</li>
+                                        <li><strong>Consent:</strong> Processing based on your specific consent (e.g., for promotional emails)</li>
+                                        <li><strong>Legitimate interests:</strong> Processing for our legitimate business interests, such as improving our services</li>
+                                        <li><strong>Legal obligation:</strong> Processing to comply with legal requirements</li>
+                                    </ul>
+                                </section>
+
+                                <section>
+                                    <h3 className="font-medium text-foreground mb-2">4. Health Data Processing</h3>
+                                    <p>HealthConnect takes a privacy-first approach to health data:</p>
+                                    <ul className="list-disc pl-5 space-y-1 mt-2">
+                                        <li>Your health metrics, history, and personal health information are processed and stored exclusively on your device</li>
+                                        <li>This data is never transmitted to our servers or accessed by our staff</li>
+                                        <li>Any AI analysis of your health data is performed locally on your device</li>
+                                        <li>You maintain complete control over the processing of your health data</li>
+                                    </ul>
+                                </section>
+
+                                <section>
+                                    <h3 className="font-medium text-foreground mb-2">5. Third-Party Processors</h3>
+                                    <p>We use the following third-party data processors:</p>
+                                    <ul className="list-disc pl-5 space-y-1 mt-2">
+                                        <li><strong>Authentication services:</strong> For secure login functionality</li>
+                                        <li><strong>Cloud storage providers:</strong> For secure storage of account information</li>
+                                        <li><strong>Analytics providers:</strong> For anonymous usage statistics</li>
+                                    </ul>
+                                    <p className="mt-2">All third-party processors are contractually bound to maintain the confidentiality and security of your data.</p>
+                                </section>
+
+                                <section>
+                                    <h3 className="font-medium text-foreground mb-2">6. Data Retention</h3>
+                                    <p>We retain different types of data for different periods:</p>
+                                    <ul className="list-disc pl-5 space-y-1 mt-2">
+                                        <li><strong>Account information:</strong> Retained until you delete your account</li>
+                                        <li><strong>Usage logs:</strong> Retained for 90 days</li>
+                                        <li><strong>Health data:</strong> Stored locally on your device and retained according to your preferences</li>
+                                    </ul>
+                                </section>
+
+                                <section>
+                                    <h3 className="font-medium text-foreground mb-2">7. International Data Transfers</h3>
+                                    <p>Your account information may be transferred to and processed in countries outside your country of residence. When we transfer your information:</p>
+                                    <ul className="list-disc pl-5 space-y-1 mt-2">
+                                        <li>We implement appropriate safeguards like standard contractual clauses</li>
+                                        <li>We ensure the receiving country provides adequate data protection</li>
+                                        <li>We comply with cross-border data transfer regulations</li>
+                                    </ul>
+                                </section>
+
+                                <section>
+                                    <h3 className="font-medium text-foreground mb-2">8. Data Subject Rights</h3>
+                                    <p>As a data subject, you have the following rights:</p>
+                                    <ul className="list-disc pl-5 space-y-1 mt-2">
+                                        <li>Right to access your personal data</li>
+                                        <li>Right to rectify inaccurate data</li>
+                                        <li>Right to erasure ("right to be forgotten")</li>
+                                        <li>Right to restrict processing</li>
+                                        <li>Right to data portability</li>
+                                        <li>Right to object to processing</li>
+                                    </ul>
+                                    <p className="mt-2">To exercise these rights, please contact our Data Protection Officer at dpo@healthconnect.com.</p>
+                                </section>
+
+                                <section>
+                                    <h3 className="font-medium text-foreground mb-2">9. Data Protection Officer</h3>
+                                    <p>Our Data Protection Officer oversees our data processing activities and can be contacted at:</p>
+                                    <p className="mt-2">
+                                        Data Protection Officer<br />
+                                        HealthConnect<br />
+                                        123 Health Street<br />
+                                        Wellness City, 10001<br />
+                                        dpo@healthconnect.com
+                                    </p>
+                                </section>
+
+                                <section>
+                                    <h3 className="font-medium text-foreground mb-2">10. Updates to Data Processing Practices</h3>
+                                    <p>We may update our data processing practices from time to time. We will notify you of any significant changes through our website or via email.</p>
                                 </section>
                             </div>
                         </motion.div>
