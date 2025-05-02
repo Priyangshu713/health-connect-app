@@ -108,7 +108,9 @@ const ChatBot: React.FC<ChatBotProps> = ({ useGemini: initialUseGemini, geminiTi
           const thinkingArray = geminiResponse.thinking
             .split(/\n(?=\d+\.|\*|\-|\(\d+\)|Step \d+:)/)
             .filter(item => item.trim().length > 0)
-            .map(item => item.trim());
+            .map(item => {
+              return item.trim().replace(/^Answer:\s*/i, 'Analysis: ');
+            });
 
           response = {
             text: geminiResponse.text,
@@ -315,11 +317,18 @@ const ChatBot: React.FC<ChatBotProps> = ({ useGemini: initialUseGemini, geminiTi
                   />
                 </Avatar>
                 <div className="bg-muted rounded-lg p-4 flex items-center space-x-2">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-2 h-2 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                    <div className="w-2 h-2 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                  </div>
+                  {isThinkingModel ? (
+                    <div className="flex items-center space-x-2 text-primary/70">
+                      <Brain className="h-4 w-4 animate-pulse" />
+                      <span className="text-sm">Thinking...</span>
+                    </div>
+                  ) : (
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-2 h-2 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-2 h-2 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    </div>
+                  )}
                 </div>
               </div>
             </motion.div>
