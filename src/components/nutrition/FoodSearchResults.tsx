@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { InfoIcon, ArrowRight, AlertTriangle, CheckCircle, AlertCircle, Leaf, Pizza } from 'lucide-react';
+import { InfoIcon, ArrowRight, AlertTriangle, CheckCircle, AlertCircle, Leaf, Pizza, XCircle } from 'lucide-react';
 
 export interface FoodSearchInfo {
   name: string;
@@ -19,6 +18,7 @@ export interface FoodSearchInfo {
   healthImplications: string[];
   benefitsInfo?: string[];
   isVegan?: boolean;
+  isNonFood?: boolean;
 }
 
 interface FoodSearchResultsProps {
@@ -28,9 +28,9 @@ interface FoodSearchResultsProps {
   onClose: () => void;
 }
 
-const FoodSearchResults: React.FC<FoodSearchResultsProps> = ({ 
-  foodInfo, 
-  isLoading, 
+const FoodSearchResults: React.FC<FoodSearchResultsProps> = ({
+  foodInfo,
+  isLoading,
   onViewDetails,
   onClose
 }) => {
@@ -48,9 +48,70 @@ const FoodSearchResults: React.FC<FoodSearchResultsProps> = ({
       </Card>
     );
   }
-  
+
   if (!foodInfo) return null;
-  
+
+  // Check if this is a non-food item based on health implications
+  const isNonFood = foodInfo.isNonFood ||
+    (foodInfo.category === 'junk' &&
+      foodInfo.healthImplications?.some(implication =>
+        implication.toLowerCase().includes('not a food item') ||
+        implication.toLowerCase().includes('not meant for consumption')
+      ));
+
+  if (isNonFood) {
+    return (
+      <Card className="w-full border-red-200">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-xl">{foodInfo.name}</CardTitle>
+            </div>
+            <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
+              Not a Food Item
+            </Badge>
+          </div>
+          <CardDescription className="flex items-center gap-1 mt-1">
+            <XCircle className="h-4 w-4 text-red-500" />
+            <span>This is not recognized as a food item</span>
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="space-y-4">
+          <div className="bg-red-50 p-4 rounded-md border border-red-200">
+            <h4 className="text-sm font-medium mb-2 flex items-center gap-2 text-red-800">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+              <span>Important Information</span>
+            </h4>
+            <ul className="space-y-1 text-sm">
+              <li className="flex items-start">
+                <span className="mr-2 text-red-500">•</span>
+                <span className="text-red-700">This is not a food item intended for human consumption</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2 text-red-500">•</span>
+                <span className="text-red-700">Please search for actual food items for nutritional information</span>
+              </li>
+              {foodInfo.healthImplications && foodInfo.healthImplications.length > 0 &&
+                foodInfo.healthImplications.map((implication, i) => (
+                  <li key={i} className="flex items-start">
+                    <span className="mr-2 text-red-500">•</span>
+                    <span className="text-red-700">{implication}</span>
+                  </li>
+                ))}
+            </ul>
+          </div>
+        </CardContent>
+
+        <CardFooter className="flex justify-between pt-2">
+          <Button variant="ghost" onClick={onClose}>
+            Close
+          </Button>
+        </CardFooter>
+      </Card>
+    );
+  }
+
   const getCategoryIcon = () => {
     switch (foodInfo.category) {
       case 'healthy':
@@ -63,7 +124,7 @@ const FoodSearchResults: React.FC<FoodSearchResultsProps> = ({
         return <InfoIcon className="h-5 w-5 text-blue-500" />;
     }
   };
-  
+
   const getCategoryLabel = () => {
     switch (foodInfo.category) {
       case 'healthy':
@@ -92,7 +153,7 @@ const FoodSearchResults: React.FC<FoodSearchResultsProps> = ({
         );
     }
   };
-  
+
   return (
     <Card className="w-full">
       <CardHeader className="pb-2">
@@ -112,7 +173,7 @@ const FoodSearchResults: React.FC<FoodSearchResultsProps> = ({
           <span>Food nutrition analysis</span>
         </CardDescription>
       </CardHeader>
-      
+
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-primary/5 p-3 rounded-md">
@@ -132,7 +193,7 @@ const FoodSearchResults: React.FC<FoodSearchResultsProps> = ({
             <div className="font-semibold">{foodInfo.fat}</div>
           </div>
         </div>
-        
+
         {foodInfo.ingredients && foodInfo.ingredients.length > 0 && (
           <>
             <Separator />
@@ -148,9 +209,9 @@ const FoodSearchResults: React.FC<FoodSearchResultsProps> = ({
             </div>
           </>
         )}
-        
+
         <Separator />
-        
+
         <div>
           <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
             {getCategoryIcon()}
@@ -166,7 +227,7 @@ const FoodSearchResults: React.FC<FoodSearchResultsProps> = ({
           </ul>
         </div>
       </CardContent>
-      
+
       <CardFooter className="flex justify-between pt-2">
         <Button variant="ghost" onClick={onClose}>
           Close
