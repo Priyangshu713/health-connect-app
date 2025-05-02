@@ -742,7 +742,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ isOpen, onClose }) =>
                     <DialogHeader>
                         <DialogTitle className="text-center text-xl">
                             <span className="text-destructive block text-2xl font-bold">
-                                We're Sorry To See You Go!
+                                We're Sorry To See You Go! 😔
                             </span>
                         </DialogTitle>
                         <DialogDescription className="text-center pt-2">
