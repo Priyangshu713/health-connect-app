@@ -504,26 +504,25 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ isOpen, onClose }) =>
         switch (tier) {
             case 'pro':
                 return [
-                    'Unlimited meal tracking and nutrition analysis',
+                    'Access to Meal tracking, Food search and Meal Generator',
                     'Advanced health reports with detailed analytics',
-                    'Priority customer support with 24/7 availability',
-                    'Personalized AI-powered health coaching',
-                    'Early access to new premium features'
+                    'Access to newer model and premium models',
+                    'Access to Advanced Analysis',
+                    'Access to Find Specialist feature'
                 ];
             case 'lite':
                 return [
-                    'Enhanced meal tracking with detailed nutrition breakdowns',
-                    'Comprehensive health reports with weekly insights',
+                    'Access to Personalized diet plan with detailed nutrition breakdowns',
+                    'Access to Health Connect AI Assistant',
                     'Priority email support',
                     'AI-powered recommendations for health improvements',
                     'Ad-free experience throughout the application'
                 ];
             default: // free
                 return [
-                    'Basic meal tracking and nutrition information',
-                    'Monthly health reports with key metrics',
-                    'Community support forum access',
-                    'AI-powered chat assistance for health questions',
+                    'Access to Health Metrics',
+                    'Acces to Basic Profile Summary',
+                    'Access to General Recomendation in Nutrition ',
                     'Access to essential health tracking features'
                 ];
         }
