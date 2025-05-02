@@ -103,12 +103,12 @@ export const createGeminiChatSession = (apiKey: string, modelType: GeminiModelTy
       initialHistory.push({
         role: "user",
         parts: [
-          { text: "When responding to health questions, I'd like you to show your thinking process. First, think through the question step by step using available medical knowledge. Label this section as 'THINKING PROCESS:'. Then provide a clear, concise answer based on your thinking as 'ANSWER:'. This will help me understand how you arrive at your health guidance. Use Markdown formatting in your answer section: use **bold** for important terms and section titles." }]
+          { text: "When responding to health questions, I'd like you to show your thinking process. First, think through the question step by step using available medical knowledge. Label this section as 'THINKING PROCESS:'. When you're ready to provide the actual response, use the exact phrase 'RESPONSE_BEGINS_HEALTH_CONNECT:' to indicate where your formal answer starts. This will help me understand how you arrive at your health guidance. Use Markdown formatting in your answer section: use **bold** for important terms and section titles." }]
       });
       initialHistory.push({
         role: "model",
         parts: [
-          { text: "I understand. For health-related questions, I'll structure my responses in two parts:\n\n1. THINKING PROCESS: Where I'll analyze the question systematically using medical knowledge.\n2. ANSWER: Where I'll provide a clear, concise response based on that analysis.\n\nThis format will give transparency to how I develop health guidance while ensuring my final answer remains accessible. In my answer section, I'll use **bold text** for important terms and section titles to improve readability.\n\nPlease note that regardless of my analysis, I'll always maintain that I'm not a medical professional, and my information should not replace professional medical advice." }]
+          { text: "I understand. For health-related questions, I'll structure my responses in two parts:\n\n1. THINKING PROCESS: Where I'll analyze the question systematically using medical knowledge.\n2. RESPONSE_BEGINS_HEALTH_CONNECT: Where I'll provide a clear, concise response based on that analysis.\n\nThis format will give transparency to how I develop health guidance while ensuring my final answer remains accessible. In my answer section, I'll use **bold text** for important terms and section titles to improve readability.\n\nPlease note that regardless of my analysis, I'll always maintain that I'm not a medical professional, and my information should not replace professional medical advice." }]
       });
     }
     // For other thinking models
@@ -116,12 +116,12 @@ export const createGeminiChatSession = (apiKey: string, modelType: GeminiModelTy
       initialHistory.push({
         role: "user",
         parts: [
-          { text: "When responding to health questions, I'd like you to show your thinking process. First, think through the question step by step using available medical knowledge. Label this section as 'THINKING PROCESS:'. Then provide a clear, concise answer based on your thinking as 'ANSWER:'. This will help me understand how you arrive at your health guidance. Use Markdown formatting in your answer section: use **bold** for important terms and section titles." }]
+          { text: "When responding to health questions, I'd like you to show your thinking process. First, think through the question step by step using available medical knowledge. Label this section as 'THINKING PROCESS:'. When you're ready to provide the actual response, use the exact phrase 'RESPONSE_BEGINS_HEALTH_CONNECT:' to indicate where your formal answer starts. This will help me understand how you arrive at your health guidance. Use Markdown formatting in your answer section: use **bold** for important terms and section titles." }]
       });
       initialHistory.push({
         role: "model",
         parts: [
-          { text: "I understand. For health-related questions, I'll structure my responses in two parts:\n\n1. THINKING PROCESS: Where I'll analyze the question systematically using medical knowledge.\n2. ANSWER: Where I'll provide a clear, concise response based on that analysis.\n\nThis format will give transparency to how I develop health guidance while ensuring my final answer remains accessible. In my answer section, I'll use **bold text** for important terms and section titles to improve readability." }]
+          { text: "I understand. For health-related questions, I'll structure my responses in two parts:\n\n1. THINKING PROCESS: Where I'll analyze the question systematically using medical knowledge.\n2. RESPONSE_BEGINS_HEALTH_CONNECT: Where I'll provide a clear, concise response based on that analysis.\n\nThis format will give transparency to how I develop health guidance while ensuring my final answer remains accessible. In my answer section, I'll use **bold text** for important terms and section titles to improve readability." }]
       });
     }
 
@@ -138,8 +138,8 @@ export const createGeminiChatSession = (apiKey: string, modelType: GeminiModelTy
 
           // If using thinking model, parse out the thinking and answer parts
           if (isThinkingModel) {
-            const thinkingMatch = responseText.match(/THINKING PROCESS:([\s\S]*?)(?=ANSWER:)/i);
-            const answerMatch = responseText.match(/ANSWER:([\s\S]*)/i);
+            const thinkingMatch = responseText.match(/THINKING PROCESS:([\s\S]*?)(?=RESPONSE_BEGINS_HEALTH_CONNECT:|ANSWER:)/i);
+            const answerMatch = responseText.match(/(?:RESPONSE_BEGINS_HEALTH_CONNECT:|ANSWER:)([\s\S]*)/i);
 
             if (thinkingMatch && answerMatch) {
               // Store the raw thinking process for UI that wants to display it separately
