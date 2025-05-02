@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format } from 'date-fns';
-import { User, Upload, X, Camera, Zap } from 'lucide-react';
+import { User, Upload, X, Camera, Zap, AlertTriangle, CheckCircle, ShieldCheck, Crown } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -19,7 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { getUserProfile, updateUserProfile, synchronizeTier, updateProfileImage } from '@/api/auth';
+import { getUserProfile, updateUserProfile, synchronizeTier, updateProfileImage, deleteUserAccount } from '@/api/auth';
 import { useHealthStore } from '@/store/healthStore';
 
 // Form schema
@@ -48,6 +48,13 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ isOpen, onClose }) =>
     const [isUploading, setIsUploading] = useState(false);
     const [isSynchronizing, setIsSynchronizing] = useState(false);
     const { geminiTier } = useHealthStore();
+
+    // States for deletion flow
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [showDeleteWarning, setShowDeleteWarning] = useState(false);
+    const [deletePassword, setDeletePassword] = useState('');
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteError, setDeleteError] = useState('');
 
     // Form setup
     const form = useForm<z.infer<typeof profileSchema>>({
@@ -169,14 +176,19 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ isOpen, onClose }) =>
             }
 
             // 2. Then update profile image if changed
-            const hasNewImage = profileImage !== profileData?.profileImage;
-            if (hasNewImage && profileImage) {
+            // First check if the image was removed (current is null but original had an image)
+            const wasImageRemoved = profileImage === null && profileData?.profileImage !== null;
+
+            // Then check if we're adding/changing an image
+            const isImageChanged = profileImage !== null && profileImage !== profileData?.profileImage;
+
+            if (isImageChanged) {
                 console.log('Updating profile image...');
-                console.log(`Image size: ${Math.round(profileImage.length / 1024)}KB`);
+                console.log(`Image size: ${Math.round((profileImage as string).length / 1024)}KB`);
 
                 try {
                     // Use the dedicated profile image update function
-                    await updateProfileImage(profileImage);
+                    await updateProfileImage(profileImage as string);
 
                     // Dispatch a profile updated event
                     window.dispatchEvent(new Event('profileUpdated'));
@@ -234,6 +246,10 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ isOpen, onClose }) =>
                         });
                     }
                 }
+            } else if (wasImageRemoved) {
+                // Image removal was handled separately by the removeProfileImage function
+                // Just add a success message for the form submission feedback
+                successMessages.push('Profile image removal confirmed');
             }
 
             // Show success message if any of the updates succeeded
@@ -243,7 +259,7 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ isOpen, onClose }) =>
                     description: successMessages.join('. '),
                 });
                 onClose();
-            } else if (!hasNewImage && values.name === profileData?.name) {
+            } else if (!isImageChanged && !wasImageRemoved && values.name === profileData?.name) {
                 toast({
                     title: 'No changes',
                     description: 'No changes were detected to save',
@@ -375,8 +391,78 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ isOpen, onClose }) =>
         }
     };
 
-    const removeProfileImage = () => {
-        setProfileImage(null);
+    const removeProfileImage = async () => {
+        try {
+            setIsUploading(true);
+
+            // Set local state to null to update UI immediately
+            setProfileImage(null);
+
+            console.log('Removing profile image...');
+
+            // Force clear browser cache for any avatar images
+            const clearImageCache = () => {
+                // Add a random query parameter to force browser to reload image
+                const timestamp = new Date().getTime();
+                const avatarElements = document.querySelectorAll('.avatar-image');
+                avatarElements.forEach(el => {
+                    if (el instanceof HTMLImageElement) {
+                        // Set src to empty then force reload with timestamp
+                        el.setAttribute('src', '');
+                        // Force browser to forget this image
+                        el.style.display = 'none';
+                        setTimeout(() => {
+                            el.style.display = '';
+                        }, 50);
+                    }
+                });
+                console.log('Cleared browser cache for avatar images');
+            };
+
+            // Clear cache first
+            clearImageCache();
+
+            // Call API to update profile with null profile image
+            const response = await updateUserProfile({ profileImage: null });
+            console.log('Profile image removal response:', response);
+
+            // Update the profileData state to reflect the change
+            if (profileData) {
+                setProfileData({
+                    ...profileData,
+                    profileImage: null
+                });
+            }
+
+            // Force navbar and UI updates with cache-busting timestamp
+            window.dispatchEvent(new CustomEvent('forceProfileReload', {
+                detail: { timestamp: Date.now() }
+            }));
+
+            // Force close the dialog after successful removal
+            onClose();
+
+            // Notify user of success
+            toast({
+                title: 'Profile image removed',
+                description: 'Your profile image has been removed successfully.',
+            });
+        } catch (error) {
+            console.error('Failed to remove profile image:', error);
+
+            // If server update fails, restore the previous image
+            if (profileData?.profileImage) {
+                setProfileImage(profileData.profileImage);
+            }
+
+            toast({
+                title: 'Error',
+                description: 'Failed to remove profile image. Please try again.',
+                variant: 'destructive',
+            });
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     const getTierBadgeClass = (tier: string) => {
@@ -413,10 +499,91 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ isOpen, onClose }) =>
         }
     };
 
+    // Get tier benefits based on user's tier
+    const getTierBenefits = (tier: string) => {
+        switch (tier) {
+            case 'pro':
+                return [
+                    'Unlimited meal tracking and nutrition analysis',
+                    'Advanced health reports with detailed analytics',
+                    'Priority customer support with 24/7 availability',
+                    'Personalized AI-powered health coaching',
+                    'Early access to new premium features'
+                ];
+            case 'lite':
+                return [
+                    'Enhanced meal tracking with detailed nutrition breakdowns',
+                    'Comprehensive health reports with weekly insights',
+                    'Priority email support',
+                    'AI-powered recommendations for health improvements',
+                    'Ad-free experience throughout the application'
+                ];
+            default: // free
+                return [
+                    'Basic meal tracking and nutrition information',
+                    'Monthly health reports with key metrics',
+                    'Community support forum access',
+                    'AI-powered chat assistance for health questions',
+                    'Access to essential health tracking features'
+                ];
+        }
+    };
+
+    // Show the initial deletion warning
+    const initiateDeleteAccount = () => {
+        setShowDeleteWarning(true);
+    };
+
+    // Proceed to password confirmation
+    const proceedToPasswordConfirm = () => {
+        setShowDeleteWarning(false);
+        setShowDeleteConfirm(true);
+    };
+
+    // Handle account deletion
+    const handleDeleteAccount = async () => {
+        if (!deletePassword) {
+            setDeleteError('Password is required to confirm deletion');
+            return;
+        }
+
+        setIsDeleting(true);
+        setDeleteError('');
+
+        try {
+            await deleteUserAccount(deletePassword);
+
+            // Account successfully deleted, show toast and redirect to login
+            toast({
+                title: 'Account Deleted',
+                description: 'Your account has been permanently deleted.',
+            });
+
+            // Close both dialogs
+            setShowDeleteConfirm(false);
+            onClose();
+
+            // Redirect to home page after a short delay
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1500);
+        } catch (error: any) {
+            console.error('Error deleting account:', error);
+            // Check if it's a route not found error
+            if (error.message?.includes('not found') || error.message?.includes('Failed to fetch')) {
+                setDeleteError('Account deletion is currently unavailable. Please try again later.');
+            } else {
+                setDeleteError(error.message || 'Failed to delete account. Please check your password and try again.');
+            }
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[425px] rounded-xl md:rounded-lg overflow-hidden">
-                <DialogHeader>
+            <DialogContent className="sm:max-w-[425px] rounded-xl md:rounded-lg overflow-hidden flex flex-col">
+                <DialogHeader className="pb-2 shrink-0">
                     <DialogTitle>Account Settings</DialogTitle>
                     <DialogDescription>
                         Update your account settings here
@@ -426,117 +593,277 @@ const AccountSettings: React.FC<AccountSettingsProps> = ({ isOpen, onClose }) =>
                 {isLoading && !profileData ? (
                     <div className="py-6 text-center">Loading account settings...</div>
                 ) : (
-                    <form onSubmit={form.handleSubmit(onSubmit)}>
-                        <div className="space-y-6 py-4">
-                            {/* Profile Image */}
-                            <div className="flex flex-col items-center gap-4 py-2">
-                                <div className="relative">
-                                    <Avatar className="h-24 w-24 border-2 border-primary/20 rounded-full">
-                                        {profileImage ? (
-                                            <AvatarImage src={profileImage} alt="Profile" className="rounded-full" />
-                                        ) : (
-                                            <AvatarFallback className="bg-primary/10 text-primary text-xl rounded-full">
-                                                {profileData?.name?.charAt(0).toUpperCase() || <User />}
-                                            </AvatarFallback>
-                                        )}
-                                    </Avatar>
+                    <div className="flex flex-col flex-1 overflow-hidden">
+                        <div className="overflow-y-auto pr-1 flex-1 max-h-[460px]">
+                            <form onSubmit={form.handleSubmit(onSubmit)}>
+                                <div className="space-y-4">
+                                    {/* Profile Image */}
+                                    <div className="flex flex-col items-center gap-3 py-2">
+                                        <div className="relative">
+                                            <Avatar className="h-20 w-20 border-2 border-primary/20 rounded-full">
+                                                {profileImage ? (
+                                                    <AvatarImage src={profileImage} alt="Profile" className="rounded-full" />
+                                                ) : (
+                                                    <AvatarFallback className="bg-primary/10 text-primary text-xl rounded-full">
+                                                        {profileData?.name?.charAt(0).toUpperCase() || <User />}
+                                                    </AvatarFallback>
+                                                )}
+                                            </Avatar>
 
-                                    <div className="absolute -bottom-2 -right-2 flex gap-1">
-                                        <label
-                                            htmlFor="profile-image-upload"
-                                            className="bg-primary text-white p-1.5 rounded-full cursor-pointer hover:bg-primary/90 transition-colors"
-                                        >
-                                            <Camera className="h-4 w-4" />
-                                            <input
-                                                id="profile-image-upload"
-                                                type="file"
-                                                accept="image/*"
-                                                className="hidden"
-                                                onChange={handleImageUpload}
-                                                disabled={isUploading}
-                                            />
-                                        </label>
+                                            <div className="absolute -bottom-2 -right-2 flex gap-1">
+                                                <label
+                                                    htmlFor="profile-image-upload"
+                                                    className="bg-primary text-white p-1.5 rounded-full cursor-pointer hover:bg-primary/90 transition-colors"
+                                                >
+                                                    <Camera className="h-4 w-4" />
+                                                    <input
+                                                        id="profile-image-upload"
+                                                        type="file"
+                                                        accept="image/*"
+                                                        className="hidden"
+                                                        onChange={handleImageUpload}
+                                                        disabled={isUploading}
+                                                    />
+                                                </label>
 
-                                        {profileImage && (
-                                            <button
-                                                type="button"
-                                                onClick={removeProfileImage}
-                                                className="bg-destructive text-white p-1.5 rounded-full hover:bg-destructive/90 transition-colors"
-                                            >
-                                                <X className="h-4 w-4" />
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {isUploading && <div className="text-sm text-muted-foreground">Uploading image...</div>}
-                            </div>
-
-                            {/* Account Information */}
-                            <div className="space-y-4">
-                                <div>
-                                    <Label htmlFor="name">Display Name</Label>
-                                    <Input
-                                        id="name"
-                                        {...form.register('name')}
-                                        placeholder="Your name"
-                                        className="mt-1"
-                                    />
-                                    {form.formState.errors.name && (
-                                        <p className="text-sm text-destructive mt-1">{form.formState.errors.name.message}</p>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <Label>Email</Label>
-                                    <Input
-                                        value={profileData?.email}
-                                        readOnly
-                                        disabled
-                                        className="mt-1 bg-muted/50"
-                                    />
-                                </div>
-
-                                <div className="flex flex-col gap-1">
-                                    <Label>Subscription Tier</Label>
-                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                                        <div className={`mt-1 inline-flex items-center gap-2 px-3 py-2 rounded-md border ${getTierBadgeClass(profileData?.tier || 'free')}`}>
-                                            {getTierName(profileData?.tier || 'free')} Tier
+                                                {profileImage && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={removeProfileImage}
+                                                        className="bg-destructive text-white p-1.5 rounded-full hover:bg-destructive/90 transition-colors"
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
-                                        {isSynchronizing ? (
-                                            <Button variant="ghost" size="sm" disabled className="h-8 px-2 mt-1">
-                                                <Zap className="h-3.5 w-3.5 animate-pulse mr-1" />
-                                                Syncing...
-                                            </Button>
-                                        ) : (
-                                            <Button variant="ghost" size="sm" onClick={synchronizeTierWithBackend} className="h-8 px-2 mt-1">
-                                                <Zap className="h-3.5 w-3.5 mr-1" />
-                                                Sync Tier
-                                            </Button>
-                                        )}
+
+                                        {isUploading && <div className="text-sm text-muted-foreground">Uploading image...</div>}
                                     </div>
+
+                                    {/* Account Information */}
+                                    <div className="space-y-3">
+                                        <div>
+                                            <Label htmlFor="name">Display Name</Label>
+                                            <Input
+                                                id="name"
+                                                {...form.register('name')}
+                                                placeholder="Your name"
+                                                className="mt-1"
+                                            />
+                                            {form.formState.errors.name && (
+                                                <p className="text-sm text-destructive mt-1">{form.formState.errors.name.message}</p>
+                                            )}
+                                        </div>
+
+                                        <div>
+                                            <Label>Email</Label>
+                                            <Input
+                                                value={profileData?.email}
+                                                readOnly
+                                                disabled
+                                                className="mt-1 bg-muted/50"
+                                            />
+                                        </div>
+
+                                        <div className="flex flex-col gap-1">
+                                            <Label>Subscription Tier</Label>
+                                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                                                <div className={`mt-1 inline-flex items-center gap-2 px-3 py-2 rounded-md border ${getTierBadgeClass(profileData?.tier || 'free')}`}>
+                                                    {getTierName(profileData?.tier || 'free')} Tier
+                                                </div>
+                                                {isSynchronizing ? (
+                                                    <Button variant="ghost" size="sm" disabled className="h-8 px-2 mt-1">
+                                                        <Zap className="h-3.5 w-3.5 animate-pulse mr-1" />
+                                                        Syncing...
+                                                    </Button>
+                                                ) : (
+                                                    <Button variant="ghost" size="sm" onClick={synchronizeTierWithBackend} className="h-8 px-2 mt-1">
+                                                        <Zap className="h-3.5 w-3.5 mr-1" />
+                                                        Sync Tier
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-col gap-1">
+                                            <Label>Member Since</Label>
+                                            <div className="mt-1 text-muted-foreground text-sm">
+                                                {formatJoinDate(profileData?.createdAt || '')}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Visual end of content - natural stopping point for most users */}
+                                    <div className="h-8"></div>
+
+                                    {/* Danger Zone - positioned way below so it requires deliberate scrolling */}
+                                    <div className="mt-28 pt-6 border-t border-destructive/20">
+                                        <h3 className="text-destructive flex items-center font-semibold text-sm">
+                                            <AlertTriangle className="h-4 w-4 mr-2" />
+                                            Danger Zone
+                                        </h3>
+                                        <p className="text-sm text-muted-foreground mt-1 mb-4">
+                                            Actions in this section cannot be undone
+                                        </p>
+
+                                        <Button
+                                            type="button"
+                                            variant="destructive"
+                                            size="sm"
+                                            className="w-full sm:w-auto"
+                                            onClick={() => setShowDeleteWarning(true)}
+                                        >
+                                            Delete Account
+                                        </Button>
+                                    </div>
+
+                                    {/* Extra space after danger zone */}
+                                    <div className="h-6"></div>
                                 </div>
 
-                                <div className="flex flex-col gap-1">
-                                    <Label>Member Since</Label>
-                                    <div className="mt-1 text-muted-foreground text-sm">
-                                        {formatJoinDate(profileData?.createdAt || '')}
-                                    </div>
-                                </div>
-                            </div>
+                                <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0 mt-4 sticky bottom-0 bg-background pt-2 pb-1">
+                                    <DialogClose asChild>
+                                        <Button type="button" variant="outline" className="w-full sm:w-auto">Cancel</Button>
+                                    </DialogClose>
+                                    <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
+                                        {isLoading ? 'Saving...' : 'Save changes'}
+                                    </Button>
+                                </DialogFooter>
+                            </form>
                         </div>
-
-                        <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
-                            <DialogClose asChild>
-                                <Button type="button" variant="outline" className="w-full sm:w-auto">Cancel</Button>
-                            </DialogClose>
-                            <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
-                                {isLoading ? 'Saving...' : 'Save changes'}
-                            </Button>
-                        </DialogFooter>
-                    </form>
+                    </div>
                 )}
             </DialogContent>
+
+            {/* Account Deletion Warning Dialog */}
+            <Dialog open={showDeleteWarning} onOpenChange={setShowDeleteWarning}>
+                <DialogContent className="sm:max-w-[500px] rounded-xl md:rounded-lg max-h-[85vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="text-center text-xl">
+                            <span className="text-destructive block text-2xl font-bold">
+                                We're Sorry To See You Go!
+                            </span>
+                        </DialogTitle>
+                        <DialogDescription className="text-center pt-2">
+                            Before you delete your account, remember the benefits of your {getTierName(profileData?.tier || 'free')} subscription:
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-6 py-4">
+                        <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
+                            <h3 className="flex items-center text-lg font-medium mb-3">
+                                <Crown className={`h-5 w-5 mr-2 ${profileData?.tier === 'pro' ? 'text-amber-500' :
+                                    profileData?.tier === 'lite' ? 'text-purple-500' :
+                                        'text-blue-500'
+                                    }`} />
+                                Your {getTierName(profileData?.tier || 'free')} Tier Benefits
+                            </h3>
+                            <ul className="space-y-2">
+                                {getTierBenefits(profileData?.tier || 'free').map((benefit, index) => (
+                                    <li key={index} className="flex items-start">
+                                        <CheckCircle className="h-5 w-5 text-primary mr-2 mt-0.5 flex-shrink-0" />
+                                        <span>{benefit}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        <div className="bg-amber-50 text-amber-800 p-4 rounded-lg border border-amber-200">
+                            <h4 className="flex items-center font-medium mb-2">
+                                <ShieldCheck className="h-5 w-5 mr-2" />
+                                What you'll lose by deleting your account:
+                            </h4>
+                            <ul className="space-y-1 ml-7 list-disc text-sm">
+                                <li>All your health and nutrition tracking history</li>
+                                <li>Personalized recommendations based on your data</li>
+                                <li>Access to premium features you've unlocked</li>
+                                <li>Your subscription benefits (you won't get a refund)</li>
+                            </ul>
+                        </div>
+
+                        <p className="text-sm text-gray-600 italic text-center">
+                            Instead of deleting your account, you can take a break and come back anytime!
+                        </p>
+                    </div>
+
+                    <DialogFooter className="flex-col space-y-3 sm:space-y-0 sm:flex-row sm:justify-between">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setShowDeleteWarning(false)}
+                            className="w-full sm:w-auto"
+                        >
+                            Keep My Account
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={proceedToPasswordConfirm}
+                            className="w-full sm:w-auto"
+                        >
+                            I Still Want To Delete
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Password Confirmation Dialog */}
+            <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+                <DialogContent className="sm:max-w-[400px] rounded-xl md:rounded-lg">
+                    <DialogHeader>
+                        <DialogTitle className="text-destructive flex items-center">
+                            <AlertTriangle className="h-5 w-5 mr-2" />
+                            Delete Account
+                        </DialogTitle>
+                        <DialogDescription>
+                            This action is permanent and cannot be undone. All your data will be permanently deleted.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 py-4">
+                        <p className="text-sm font-medium text-destructive">
+                            Please enter your password to confirm account deletion:
+                        </p>
+
+                        <div>
+                            <Label htmlFor="delete-password">Password</Label>
+                            <Input
+                                id="delete-password"
+                                type="password"
+                                value={deletePassword}
+                                onChange={(e) => setDeletePassword(e.target.value)}
+                                placeholder="Enter your password"
+                                className="mt-1"
+                            />
+                            {deleteError && (
+                                <p className="text-sm text-destructive mt-1">{deleteError}</p>
+                            )}
+                        </div>
+                    </div>
+
+                    <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setShowDeleteConfirm(false)}
+                            disabled={isDeleting}
+                            className="w-full sm:w-auto"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={handleDeleteAccount}
+                            disabled={isDeleting}
+                            className="w-full sm:w-auto"
+                        >
+                            {isDeleting ? 'Deleting...' : 'Delete My Account'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </Dialog>
     );
 };
