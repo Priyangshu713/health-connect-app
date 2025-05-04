@@ -20,6 +20,7 @@ import TermsAndPrivacyPage from './pages/TermsAndPrivacyPage';
 import Contact from './pages/Contact';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 import { synchronizeTier, logoutUser } from '@/api/auth';
 
@@ -95,6 +96,9 @@ function App() {
     }
   }, []);
 
+  // Define public paths that don't require authentication
+  const publicPaths = ['/profile', '/ai-bot', '/forgot-password', '/reset-password', '/about', '/contact'];
+
   return (
     <>
       {loading ? (
@@ -105,20 +109,62 @@ function App() {
           <div className="relative flex min-h-screen flex-col">
             <div className="flex-1">
               <Routes>
-                <Route path="/" element={<Index />} />
+                <Route path="/" element={
+                  <ProtectedRoute publicPaths={publicPaths}>
+                    <Index />
+                  </ProtectedRoute>
+                } />
                 <Route path="/profile" element={<Profile />} />
-                <Route path="/health-report" element={<HealthReport />} />
-                <Route path="/nutrition" element={<Nutrition />} />
                 <Route path="/ai-bot" element={<AIBot />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/history" element={<History />} />
-                <Route path="/doctor-finder" element={<DoctorFinder />} />
-                <Route path="/doctor/:id" element={<DoctorDetails />} />
-                <Route path="/doctor-portal" element={<DoctorPortal />} />
-                <Route path="/terms-privacy" element={<TermsAndPrivacyPage />} />
-                <Route path="/contact" element={<Contact />} />
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+
+                {/* Protected Routes */}
+                <Route path="/health-report" element={
+                  <ProtectedRoute publicPaths={publicPaths}>
+                    <HealthReport />
+                  </ProtectedRoute>
+                } />
+                <Route path="/nutrition" element={
+                  <ProtectedRoute publicPaths={publicPaths}>
+                    <Nutrition />
+                  </ProtectedRoute>
+                } />
+                <Route path="/about" element={
+                  <ProtectedRoute publicPaths={publicPaths}>
+                    <About />
+                  </ProtectedRoute>
+                } />
+                <Route path="/history" element={
+                  <ProtectedRoute publicPaths={publicPaths}>
+                    <History />
+                  </ProtectedRoute>
+                } />
+                <Route path="/doctor-finder" element={
+                  <ProtectedRoute publicPaths={publicPaths}>
+                    <DoctorFinder />
+                  </ProtectedRoute>
+                } />
+                <Route path="/doctor/:id" element={
+                  <ProtectedRoute publicPaths={publicPaths}>
+                    <DoctorDetails />
+                  </ProtectedRoute>
+                } />
+                <Route path="/doctor-portal" element={
+                  <ProtectedRoute publicPaths={publicPaths}>
+                    <DoctorPortal />
+                  </ProtectedRoute>
+                } />
+                <Route path="/terms-privacy" element={
+                  <ProtectedRoute publicPaths={publicPaths}>
+                    <TermsAndPrivacyPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/contact" element={
+                  <ProtectedRoute publicPaths={publicPaths}>
+                    <Contact />
+                  </ProtectedRoute>
+                } />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>
