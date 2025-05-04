@@ -1,12 +1,11 @@
-
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  SparklesIcon, 
-  Utensils, 
-  Dumbbell, 
-  Stethoscope, 
+import {
+  SparklesIcon,
+  Utensils,
+  Dumbbell,
+  Stethoscope,
   Brain,
   Wand2,
   RocketIcon,
@@ -33,31 +32,31 @@ import AdvancedHealthMetricsCard from '@/components/health-report/AdvancedHealth
 const HealthReport: React.FC = () => {
   const navigate = useNavigate();
   const { healthData } = useHealthStore();
-  const { 
-    loading, 
-    recommendations, 
-    error, 
-    useAI, 
-    healthScore, 
+  const {
+    loading,
+    recommendations,
+    error,
+    useAI,
+    healthScore,
     handleToggleAI,
     fetchRecommendations,
     geminiTier
   } = useHealthRecommendations();
-  
+
   // Check if user has a paid tier (lite or pro)
   const hasPaidTier = geminiTier !== 'free';
-  
+
   useEffect(() => {
     if (!healthData.completedProfile) {
       navigate('/profile');
     }
   }, [healthData.completedProfile, navigate]);
-  
+
   const dietRecs = recommendations.filter(rec => rec.type === 'diet');
   const exerciseRecs = recommendations.filter(rec => rec.type === 'exercise');
   const medicalRecs = recommendations.filter(rec => rec.type === 'medical');
   const lifestyleRecs = recommendations.filter(rec => rec.type === 'lifestyle');
-  
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -70,7 +69,7 @@ const HealthReport: React.FC = () => {
   };
 
   const hasAdvancedAnalysis = Boolean(healthData.completedAdvancedAnalysis);
-  
+
   const advancedMetrics = hasAdvancedAnalysis ? [
     {
       icon: <BedIcon className="h-5 w-5 text-health-lavender" />,
@@ -97,11 +96,11 @@ const HealthReport: React.FC = () => {
       color: "text-health-sky"
     }
   ] : undefined;
-  
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <main className="container mx-auto max-w-5xl pt-24 pb-16 px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -119,7 +118,7 @@ const HealthReport: React.FC = () => {
             <CardContent>
               <div className="flex flex-col md:flex-row items-center gap-8 py-4">
                 <AnimatedHealthScore score={healthScore} />
-                
+
                 <div className="flex-1 space-y-6">
                   <motion.div
                     initial={{ opacity: 0 }}
@@ -130,17 +129,17 @@ const HealthReport: React.FC = () => {
                       <InfoIcon className="h-4 w-4 text-primary" />
                       Your Health Metrics
                     </h3>
-                    
+
                     <div className="space-y-5">
-                      <HealthMetricBar 
+                      <HealthMetricBar
                         label="BMI"
                         value={`${healthData.bmi} (${healthData.bmiCategory})`}
                         status={healthData.bmiCategory === 'Normal' ? 'Optimal' : 'Needs Attention'}
                         percentage={healthData.bmiCategory === 'Normal' ? 90 : 60}
                         delay={0.7}
                       />
-                      
-                      <HealthMetricBar 
+
+                      <HealthMetricBar
                         label="Blood Glucose"
                         value={`${healthData.bloodGlucose} mg/dL`}
                         status={healthData.bloodGlucose && healthData.bloodGlucose <= 99 ? 'Normal' : 'Elevated'}
@@ -149,8 +148,8 @@ const HealthReport: React.FC = () => {
                       />
                     </div>
                   </motion.div>
-                  
-                  <motion.p 
+
+                  <motion.p
                     className="text-sm text-muted-foreground"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -163,34 +162,42 @@ const HealthReport: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-          
-          <AdvancedHealthMetricsCard 
+
+          <AdvancedHealthMetricsCard
             hasAdvancedAnalysis={hasAdvancedAnalysis}
             metrics={advancedMetrics}
           />
         </motion.div>
-        
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
         >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold flex items-center gap-2 text-primary">
+              {hasPaidTier ? (
+                <>
+                  <Wand2 className="h-5 w-5" />
+                  AI Suggestions
+                </>
+              ) : (
+                <>
+                  <RocketIcon className="h-5 w-5" />
+                  Suggestions
+                </>
+              )}
+            </h2>
+            {useAI && hasPaidTier && (
+              <div className="bg-primary/10 text-primary text-xs px-3 py-1 rounded-full flex items-center gap-1 border border-primary/20">
+                <Wand2 className="h-3 w-3" />
+                AI-powered
+              </div>
+            )}
+          </div>
+
           <Tabs defaultValue="all" className="w-full">
             <div className="relative">
-              <motion.div 
-                className="absolute -top-1 -right-1 z-10"
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 1, duration: 0.5, type: "spring" }}
-              >
-                {useAI && hasPaidTier && (
-                  <div className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                    <Wand2 className="h-3 w-3" />
-                    AI-powered
-                  </div>
-                )}
-              </motion.div>
-              
               <TabsList className="mb-6 p-1 bg-primary/5 border border-primary/20 rounded-xl w-full grid grid-cols-4 shadow-sm">
                 <TabsTrigger value="all" className="data-[state=active]:bg-primary rounded-lg">
                   <RocketIcon className="h-4 w-4 mr-2 md:mr-1" />
@@ -210,14 +217,14 @@ const HealthReport: React.FC = () => {
                 </TabsTrigger>
               </TabsList>
             </div>
-            
+
             {error && (
               <Alert variant="destructive" className="mb-4">
                 <AlertTitle>Error</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            
+
             <TabsContent value="all" className="mt-0">
               {loading ? (
                 <LoadingRecommendations />
@@ -229,10 +236,10 @@ const HealthReport: React.FC = () => {
                   className="space-y-4"
                 >
                   {recommendations.map((rec, index) => (
-                    <RecommendationCard 
-                      key={rec.id || index} 
-                      recommendation={rec} 
-                      index={index} 
+                    <RecommendationCard
+                      key={rec.id || index}
+                      recommendation={rec}
+                      index={index}
                     />
                   ))}
                 </motion.div>
@@ -240,7 +247,7 @@ const HealthReport: React.FC = () => {
                 <EmptyRecommendations type="health" />
               )}
             </TabsContent>
-            
+
             <TabsContent value="diet" className="mt-0">
               {loading ? (
                 <LoadingRecommendations />
@@ -252,22 +259,22 @@ const HealthReport: React.FC = () => {
                   className="space-y-4"
                 >
                   {dietRecs.map((rec, index) => (
-                    <RecommendationCard 
-                      key={rec.id || index} 
-                      recommendation={rec} 
-                      index={index} 
+                    <RecommendationCard
+                      key={rec.id || index}
+                      recommendation={rec}
+                      index={index}
                     />
                   ))}
-                  
-                  <motion.div 
+
+                  <motion.div
                     className="pt-4"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}
                   >
-                    <Button 
-                      variant="outline" 
-                      className="w-full gap-2 group" 
+                    <Button
+                      variant="outline"
+                      className="w-full gap-2 group"
                       onClick={() => navigate('/nutrition')}
                     >
                       <Utensils className="h-4 w-4" />
@@ -280,7 +287,7 @@ const HealthReport: React.FC = () => {
                 <EmptyRecommendations type="diet" />
               )}
             </TabsContent>
-            
+
             <TabsContent value="exercise" className="mt-0">
               {loading ? (
                 <LoadingRecommendations />
@@ -292,10 +299,10 @@ const HealthReport: React.FC = () => {
                   className="space-y-4"
                 >
                   {exerciseRecs.map((rec, index) => (
-                    <RecommendationCard 
-                      key={rec.id || index} 
-                      recommendation={rec} 
-                      index={index} 
+                    <RecommendationCard
+                      key={rec.id || index}
+                      recommendation={rec}
+                      index={index}
                     />
                   ))}
                 </motion.div>
@@ -303,7 +310,7 @@ const HealthReport: React.FC = () => {
                 <EmptyRecommendations type="exercise" />
               )}
             </TabsContent>
-            
+
             <TabsContent value="medical" className="mt-0">
               {loading ? (
                 <LoadingRecommendations />
@@ -315,22 +322,22 @@ const HealthReport: React.FC = () => {
                   className="space-y-4"
                 >
                   {medicalRecs.map((rec, index) => (
-                    <RecommendationCard 
-                      key={rec.id || index} 
-                      recommendation={rec} 
-                      index={index} 
+                    <RecommendationCard
+                      key={rec.id || index}
+                      recommendation={rec}
+                      index={index}
                     />
                   ))}
-                  
-                  <motion.div 
+
+                  <motion.div
                     className="pt-4"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}
                   >
-                    <Button 
-                      variant="outline" 
-                      className="w-full gap-2 group" 
+                    <Button
+                      variant="outline"
+                      className="w-full gap-2 group"
                       onClick={() => navigate('/ai-bot')}
                     >
                       <Brain className="h-4 w-4" />
