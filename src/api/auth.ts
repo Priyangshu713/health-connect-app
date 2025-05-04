@@ -6,6 +6,22 @@
 const API_URL = 'https://health-connect-backend-umber.vercel.app/api';
 
 /**
+ * Helper function to remove an email from the deleted accounts list in localStorage
+ */
+const _removeFromDeletedAccounts = (email: string) => {
+    if (!email) return;
+
+    try {
+        const deletedAccounts = JSON.parse(localStorage.getItem('healthconnect_deleted_accounts') || '[]');
+        const updatedAccounts = deletedAccounts.filter((account: string) => account !== email);
+        localStorage.setItem('healthconnect_deleted_accounts', JSON.stringify(updatedAccounts));
+        console.log(`Removed account ${email} from deleted accounts list in local storage`);
+    } catch (error) {
+        console.error('Error removing account from deleted accounts list:', error);
+    }
+};
+
+/**
  * Register a new user
  * @param {Object} userData - User registration data
  * @param {string} userData.name - User's name
@@ -14,6 +30,9 @@ const API_URL = 'https://health-connect-backend-umber.vercel.app/api';
  * @returns {Promise<Object>} User data with token
  */
 export const registerUser = async (userData: { name: string; email: string; password: string }) => {
+    // First, check if this email is in the deleted accounts list and remove it
+    _removeFromDeletedAccounts(userData.email);
+
     const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: {
@@ -54,21 +73,36 @@ export const loginUser = async (credentials: { email: string; password: string }
         console.error('Error checking deleted accounts:', error);
     }
 
-    const response = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(credentials),
-    });
+    try {
+        const response = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(credentials),
+        });
 
-    const data = await response.json();
+        const data = await response.json();
 
-    if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
+        if (!response.ok) {
+            throw new Error(data.message || 'Login failed');
+        }
+
+        return data;
+    } catch (error) {
+        // If login fails with "Invalid email or password", the account exists in the database
+        // but might be incorrectly marked as deleted in localStorage.
+        // In this case, let's remove it from the deleted accounts to allow reactivation.
+        if ((error as Error).message.includes('Invalid email or password')) {
+            try {
+                _removeFromDeletedAccounts(credentials.email);
+                console.log('Account exists in database but was marked as deleted locally. Removed from deleted list.');
+            } catch (e) {
+                console.error('Error cleaning up deleted accounts list:', e);
+            }
+        }
+        throw error;
     }
-
-    return data;
 };
 
 /**
@@ -577,5 +611,31 @@ const _markAccountAsDeleted = (email: string | null) => {
         console.log(`Marked account ${email} as deleted in local storage`);
     } catch (error) {
         console.error('Error marking account as deleted:', error);
+    }
+};
+
+/**
+ * Get the list of deleted accounts from localStorage
+ * @returns {string[]} Array of deleted account emails
+ */
+export const getDeletedAccounts = (): string[] => {
+    try {
+        return JSON.parse(localStorage.getItem('healthconnect_deleted_accounts') || '[]');
+    } catch (error) {
+        console.error('Error reading deleted accounts:', error);
+        return [];
+    }
+};
+
+/**
+ * Reset the deleted accounts list in localStorage
+ * This is a utility function that can be used to help users who are having issues with account recovery
+ */
+export const resetDeletedAccountsList = (): void => {
+    try {
+        localStorage.setItem('healthconnect_deleted_accounts', '[]');
+        console.log('Deleted accounts list has been reset');
+    } catch (error) {
+        console.error('Error resetting deleted accounts list:', error);
     }
 }; 
