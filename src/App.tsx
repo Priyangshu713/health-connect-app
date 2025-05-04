@@ -69,6 +69,10 @@ function App() {
     if (isAuth && userEmail) {
       try {
         const deletedAccounts = JSON.parse(localStorage.getItem('healthconnect_deleted_accounts') || '[]');
+
+        // Only consider the account deleted if it's still in the deleted accounts list
+        // If it's been reactivated through the registration process, the email would have been
+        // removed from this list already
         if (deletedAccounts.includes(userEmail)) {
           console.warn('Detected login with previously deleted account:', userEmail);
           // Force logout
