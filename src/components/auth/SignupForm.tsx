@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,13 +12,14 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Lock, Mail, User } from "lucide-react";
+import { Lock, Mail, User, AlertCircle, RefreshCw } from "lucide-react";
 import { motion } from 'framer-motion';
 import { useToast } from '@/components/ui/use-toast';
 import { useNavigate, Link } from 'react-router-dom';
 import { dispatchAuthEvent } from '@/App';
 import { registerUser } from '@/api/auth';
 import { useHealthStore } from '@/store/healthStore';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters" }),
@@ -37,6 +38,9 @@ const SignupForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { setGeminiTier } = useHealthStore();
+  const [accountDeleted, setAccountDeleted] = useState(false);
+  const [emailToRecover, setEmailToRecover] = useState('');
+  const [isRecovering, setIsRecovering] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -48,10 +52,86 @@ const SignupForm = () => {
     },
   });
 
+  // Function to remove email from deleted accounts list
+  const removeFromDeletedAccounts = (email: string) => {
+    try {
+      const deletedAccounts = JSON.parse(localStorage.getItem('healthconnect_deleted_accounts') || '[]');
+      const updatedAccounts = deletedAccounts.filter((account: string) => account !== email);
+      localStorage.setItem('healthconnect_deleted_accounts', JSON.stringify(updatedAccounts));
+      console.log(`Removed account ${email} from deleted accounts list`);
+      return true;
+    } catch (error) {
+      console.error('Error removing from deleted accounts:', error);
+      return false;
+    }
+  };
+
+  // Check for deleted status when email changes
+  useEffect(() => {
+    const subscription = form.watch((value, { name }) => {
+      if (name === 'email' && value.email) {
+        try {
+          const deletedAccounts = JSON.parse(localStorage.getItem('healthconnect_deleted_accounts') || '[]');
+          if (deletedAccounts.includes(value.email)) {
+            setAccountDeleted(true);
+            setEmailToRecover(value.email);
+          } else {
+            setAccountDeleted(false);
+            setEmailToRecover('');
+          }
+        } catch (e) {
+          console.error('Error checking deleted accounts:', e);
+        }
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form.watch]);
+
+  // Handle account recovery
+  const handleRecoverAccount = () => {
+    setIsRecovering(true);
+
+    try {
+      if (removeFromDeletedAccounts(emailToRecover)) {
+        setAccountDeleted(false);
+        toast({
+          title: "Account recovered",
+          description: "Your account has been recovered. You can now register with this email.",
+        });
+      } else {
+        toast({
+          title: "Recovery failed",
+          description: "Unable to recover your account. Please try again or use a different email.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Recovery error:', error);
+      toast({
+        title: "Recovery failed",
+        description: "An unexpected error occurred during recovery.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRecovering(false);
+    }
+  };
+
   const onSubmit = async (data: FormValues) => {
     setIsLoading(true);
 
     try {
+      // Check if this account was previously marked as deleted
+      const wasDeleted = (() => {
+        try {
+          const deletedAccounts = JSON.parse(localStorage.getItem('healthconnect_deleted_accounts') || '[]');
+          return deletedAccounts.includes(data.email);
+        } catch (e) {
+          return false;
+        }
+      })();
+
       // Submit only name, email, and password to the API
       const { name, email, password } = data;
       const registerData = { name, email, password };
@@ -76,10 +156,12 @@ const SignupForm = () => {
       // Dispatch auth event to update global state
       dispatchAuthEvent(true, email);
 
-      // Show success toast
+      // Show success toast - special message if account was previously deleted
       toast({
-        title: "Account created successfully",
-        description: "Welcome to HealthConnect!",
+        title: wasDeleted ? "Account reactivated" : "Account created successfully",
+        description: wasDeleted
+          ? "Your previously deleted account has been reactivated."
+          : "Welcome to HealthConnect!",
       });
 
       // Navigate to profile page
@@ -99,6 +181,37 @@ const SignupForm = () => {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+        {accountDeleted && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Previously Deleted Account</AlertTitle>
+              <AlertDescription className="mt-2">
+                <p className="mb-2">This email address was previously used with an account that was deleted.</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-1 bg-destructive/10 border-destructive/20"
+                  onClick={handleRecoverAccount}
+                  disabled={isRecovering}
+                >
+                  {isRecovering ? (
+                    <>
+                      <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                      Recovering...
+                    </>
+                  ) : (
+                    "Recover Account"
+                  )}
+                </Button>
+              </AlertDescription>
+            </Alert>
+          </motion.div>
+        )}
+
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
