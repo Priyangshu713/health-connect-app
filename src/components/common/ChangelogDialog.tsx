@@ -30,55 +30,109 @@ interface ChangelogItem {
 // Sample changelog data - this would come from your backend in a real app
 const changelogData: ChangelogItem[] = [
     {
-        date: 'May 20, 2023',
-        version: '2.5.0',
+        date: 'May 5, 2025',
+        version: '3.2.0',
         items: [
             {
-                text: 'Added Nutrition & Fitness Tracker with integrated meal and workout tracking',
+                text: 'Added AI health insights dashboard with personalized recommendations',
                 type: 'feature'
             },
             {
-                text: 'Improved UI animations for a smoother user experience',
+                text: 'Improved search functionality with smart filters and spring animations',
                 type: 'improvement'
             },
             {
-                text: 'New AI-powered recipe suggestions based on your health profile',
-                type: 'feature'
+                text: 'Fixed synchronization issues with wearable device data',
+                type: 'bugfix'
             }
         ]
     },
     {
-        date: 'April 15, 2023',
-        version: '2.4.2',
+        date: 'April 28, 2025',
+        version: '3.1.5',
         items: [
             {
-                text: 'Fixed loading issues with health reports on mobile devices',
+                text: 'Added What\'s New changelog feature to keep users updated on platform changes',
+                type: 'feature'
+            },
+            {
+                text: 'Enhanced accessibility features throughout the platform',
+                type: 'improvement'
+            },
+            {
+                text: 'Fixed loading issues in the appointment scheduler',
+                type: 'bugfix'
+            }
+        ]
+    },
+    {
+        date: 'April 10, 2025',
+        version: '3.1.0',
+        items: [
+            {
+                text: 'Introduced telemedicine integration for virtual doctor consultations',
+                type: 'feature'
+            },
+            {
+                text: 'Redesigned dashboard for better health metric visualization',
+                type: 'improvement'
+            },
+            {
+                text: 'Optimized app performance on mobile devices',
+                type: 'improvement'
+            }
+        ]
+    },
+    {
+        date: 'March 28, 2025',
+        version: '3.0.5',
+        items: [
+            {
+                text: 'Added meal generator on nutrition page with customizable options',
+                type: 'feature'
+            },
+            {
+                text: 'Integrated new AI models (2.5pro) to Pro and Lite tier subscriptions',
+                type: 'feature'
+            },
+            {
+                text: 'Fixed various UI inconsistencies and performance issues',
+                type: 'bugfix'
+            }
+        ]
+    },
+    {
+        date: 'March 25, 2025',
+        version: '3.0.0',
+        items: [
+            {
+                text: 'Introduced subscription tiers: Free, Lite, and Pro with differentiated features',
+                type: 'feature'
+            },
+            {
+                text: 'Fixed critical bug on profile page not registering gender selection',
                 type: 'bugfix'
             },
             {
-                text: 'Added more detailed nutrition information for common foods',
+                text: 'Comprehensive UI improvements across all platform sections',
                 type: 'improvement'
-            },
-            {
-                text: 'Announcement: Health specialists directory now available nationwide',
-                type: 'announcement'
             }
         ]
     },
     {
-        date: 'March 29, 2023',
-        version: '2.4.0',
+        date: 'March 1, 2025',
+        version: '2.5.0',
         items: [
             {
-                text: 'Launched new AI chatbot for personalized health questions',
+                text: 'Official launch of Health Connect platform',
+                type: 'announcement'
+            },
+            {
+                text: 'Integrated health tracking with comprehensive metrics dashboard',
                 type: 'feature'
             },
             {
-                text: 'Redesigned profile page with better health metrics visualization',
-                type: 'improvement'
-            },
-            {
-                text: 'Added support for importing health data from wearable devices',
+                text: 'Released mobile apps for iOS and Android platforms',
                 type: 'feature'
             }
         ]
