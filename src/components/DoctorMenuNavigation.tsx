@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useDoctorAuth } from '@/hooks/useDoctorAuth';
@@ -50,6 +49,7 @@ const DoctorMenuNavigation: React.FC = () => {
                     </NavigationMenuTrigger>
                     <NavigationMenuContent>
                         <ul className="grid gap-3 p-4 w-[200px]">
+                            {/* Temporarily disabled Doctor Portal
                             <li>
                                 <NavigationMenuLink asChild>
                                     <Link
@@ -73,6 +73,7 @@ const DoctorMenuNavigation: React.FC = () => {
                                     </Link>
                                 </NavigationMenuLink>
                             </li>
+                            */}
                         </ul>
                     </NavigationMenuContent>
                 </NavigationMenuItem>
