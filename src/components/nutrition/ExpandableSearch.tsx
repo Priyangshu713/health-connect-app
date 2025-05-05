@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Search, X, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { motion, AnimatePresence, useAnimation } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useHealthStore } from '@/store/healthStore';
 import { useToast } from '@/hooks/use-toast';
 import { getFoodNutritionInfoFromGemini } from '@/services/NutritionGeminiService';
@@ -20,7 +20,6 @@ const ExpandableSearch: React.FC<ExpandableSearchProps> = ({ onSearchResult }) =
   const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
   const isPro = geminiTier === 'pro';
-  const controls = useAnimation();
 
   useEffect(() => {
     // Focus the input when expanded
@@ -40,34 +39,6 @@ const ExpandableSearch: React.FC<ExpandableSearchProps> = ({ onSearchResult }) =
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
   }, []);
-
-  useEffect(() => {
-    if (!isExpanded && isPro) {
-      // Only apply the pulse animation if the button is not expanded and the user is Pro
-      const sequence = async () => {
-        await controls.start({
-          scale: 1.05,
-          transition: { duration: 0.3, ease: "easeInOut" }
-        });
-        await controls.start({
-          scale: 1,
-          transition: { duration: 0.3, ease: "easeInOut" }
-        });
-      };
-
-      // First set the initial state
-      controls.set({ scale: 1, opacity: 1 });
-
-      // Start the sequence immediately
-      sequence();
-
-      // Then run it periodically
-      const pulseInterval = setInterval(sequence, 5000);
-
-      // Clean up interval
-      return () => clearInterval(pulseInterval);
-    }
-  }, [isExpanded, isPro, controls]);
 
   const toggleSearch = () => {
     if (!isPro) {
@@ -116,54 +87,58 @@ const ExpandableSearch: React.FC<ExpandableSearchProps> = ({ onSearchResult }) =
         {isExpanded ? (
           <motion.form
             initial={{ width: '40px', opacity: 0.5 }}
-            animate={{ width: '100%', opacity: 1 }}
-            exit={{ width: '40px', opacity: 0 }}
-            transition={{
-              type: "spring",
-              stiffness: 300,
-              damping: 25,
-              duration: 0.4
+            animate={{
+              width: '100%',
+              opacity: 1,
+              transition: {
+                width: { type: "spring", stiffness: 400, damping: 25 },
+                opacity: { duration: 0.2 }
+              }
+            }}
+            exit={{
+              width: '40px',
+              opacity: 0,
+              transition: {
+                width: { duration: 0.3 },
+                opacity: { duration: 0.2 }
+              }
             }}
             className="flex items-center"
             onSubmit={handleSearch}
           >
             <div className="relative flex-1">
-              <Input
-                ref={inputRef}
-                type="text"
-                placeholder="Search for a food item..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pr-10 w-full transition-shadow duration-300 focus:shadow-md"
-                disabled={isSearching}
-              />
-              <AnimatePresence>
-                {searchQuery && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ type: "spring", stiffness: 500, damping: 25 }}
-                    className="absolute right-0 top-0 h-full"
-                  >
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-full"
-                      onClick={() => setSearchQuery('')}
-                    >
-                      <X className="h-4 w-4" />
-                      <span className="sr-only">Clear</span>
-                    </Button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.2, delay: 0.1 }}
+              >
+                <Input
+                  ref={inputRef}
+                  type="text"
+                  placeholder="Search for a food item..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pr-10 w-full"
+                  disabled={isSearching}
+                />
+              </motion.div>
+              {searchQuery && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0 h-full"
+                  onClick={() => setSearchQuery('')}
+                >
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Clear</span>
+                </Button>
+              )}
             </div>
             <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 500, damping: 25 }}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.2, delay: 0.2 }}
             >
               <Button
                 type="submit"
@@ -177,9 +152,9 @@ const ExpandableSearch: React.FC<ExpandableSearchProps> = ({ onSearchResult }) =
               </Button>
             </motion.div>
             <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 500, damping: 25 }}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.2, delay: 0.3 }}
             >
               <Button
                 type="button"
@@ -195,32 +170,39 @@ const ExpandableSearch: React.FC<ExpandableSearchProps> = ({ onSearchResult }) =
           </motion.form>
         ) : (
           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={controls}
-            exit={{ scale: 0.8, opacity: 0 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
             transition={{
               type: "spring",
               stiffness: 400,
-              damping: 17,
-              duration: 0.3
+              damping: 15,
+              mass: 1
             }}
+            whileHover={{
+              scale: 1.05,
+              transition: {
+                type: "spring",
+                stiffness: 400,
+                damping: 10
+              }
+            }}
+            whileTap={{ scale: 0.95 }}
           >
             <Button
               onClick={toggleSearch}
               variant="ghost"
               size="icon"
               className={cn(
-                "rounded-full p-2 transition-all duration-300 hover:shadow-md",
-                !isPro && "text-muted-foreground hover:text-foreground",
-                isPro && "hover:bg-primary/10"
+                "rounded-full p-2 transition-colors duration-300",
+                !isPro && "text-muted-foreground"
               )}
             >
+              {/* Fix the overlapping icons by using a proper positioning */}
               <div className="relative">
                 <Search className="h-5 w-5 transition-transform duration-300" />
                 {!isPro && (
-                  <span className="absolute -top-2 -right-2 bg-background rounded-full">
+                  <span className="absolute -top-2 -right-2 bg-background rounded-full shadow-sm">
                     <Lock className="h-3 w-3" />
                   </span>
                 )}
