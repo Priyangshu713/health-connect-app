@@ -228,7 +228,9 @@ const Navbar = () => {
     ...(isDoctorUser ? [] : [{ path: '/doctor-finder', label: 'Specialists', icon: <UserRound className="mr-2 h-4 w-4" />, proOnly: true }]),
     { path: '/ai-bot', label: 'AI Bot', icon: <Bot className="mr-2 h-4 w-4" /> },
     { path: '/about', label: 'About Us', icon: <Info className="mr-2 h-4 w-4" /> },
+    /* Temporarily disabled Doctor Portal
     ...(isDoctorUser ? [{ path: '/doctor-portal', label: 'Doctor Portal', icon: <UserRound className="mr-2 h-4 w-4" /> }] : []),
+    */
   ];
 
   // Load user profile data including profile image
@@ -276,6 +278,86 @@ const Navbar = () => {
     window.addEventListener('profileUpdated', handleProfileUpdate);
     return () => {
       window.removeEventListener('profileUpdated', handleProfileUpdate);
+    };
+  }, [isAuthenticated]);
+
+  // Fix profile image not being cleared properly
+  useEffect(() => {
+    // Function to reload profile data
+    const loadProfileData = async () => {
+      try {
+        // First clear the profile image to force UI refresh
+        setUserProfileImage(null);
+
+        // Then fetch the latest profile data
+        const user = await getUserProfile();
+
+        if (user.profileImage) {
+          setUserProfileImage(user.profileImage);
+        } else {
+          // Explicitly set to null and ensure UI updates
+          setUserProfileImage(null);
+          // Force a re-render by updating state
+          setTimeout(() => {
+            setIsAuthenticated(prev => {
+              // This trick forces a re-render without changing the value
+              localStorage.setItem('isAuthenticated', 'true');
+              return prev;
+            });
+          }, 50);
+        }
+      } catch (error) {
+        console.error('Error loading profile data:', error);
+        // Clear image on error to be safe
+        setUserProfileImage(null);
+      }
+    };
+
+    // Initial load
+    if (isAuthenticated) {
+      loadProfileData();
+    }
+
+    // Listen for profile updates
+    const handleProfileUpdate = () => {
+      console.log('Profile updated event received');
+      // Force clear image first
+      setUserProfileImage(null);
+      // Then reload
+      loadProfileData();
+    };
+
+    // Listen for force reloads
+    const handleForceReload = () => {
+      console.log('Force profile reload event received');
+      // Clear all cached data
+      setUserProfileImage(null);
+
+      // Force redraw of avatar component
+      const avatarElements = document.querySelectorAll('.avatar-image');
+      avatarElements.forEach(el => {
+        if (el instanceof HTMLImageElement) {
+          // Clear any src to force reload
+          el.src = '';
+          el.style.display = 'none';
+          setTimeout(() => {
+            el.style.display = '';
+          }, 50);
+        }
+      });
+
+      // Then reload from server
+      setTimeout(loadProfileData, 100);
+    };
+
+    // Add event listeners
+    window.addEventListener('profileUpdated', handleProfileUpdate);
+    window.addEventListener('forceProfileReload', handleForceReload);
+
+    // Clean up event listeners
+    return () => {
+      window.removeEventListener('profileUpdated', handleProfileUpdate);
+      window.removeEventListener('forceProfileReload', handleForceReload);
     };
   }, [isAuthenticated]);
 
@@ -357,7 +439,12 @@ const Navbar = () => {
                   >
                     <Avatar className="h-8 w-8 bg-primary text-white">
                       {userProfileImage ? (
-                        <AvatarImage src={userProfileImage} alt="Profile" />
+                        <AvatarImage
+                          src={userProfileImage}
+                          alt="Profile"
+                          className="avatar-image"
+                          key={`avatar-${Date.now()}`}
+                        />
                       ) : (
                         <AvatarFallback>{getUserInitials()}</AvatarFallback>
                       )}
@@ -446,7 +533,12 @@ const Navbar = () => {
                 <div className="flex items-center space-x-3 px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl mb-2">
                   <Avatar className="h-10 w-10 bg-primary text-white">
                     {userProfileImage ? (
-                      <AvatarImage src={userProfileImage} alt="Profile" />
+                      <AvatarImage
+                        src={userProfileImage}
+                        alt="Profile"
+                        className="avatar-image"
+                        key={`avatar-${Date.now()}`}
+                      />
                     ) : (
                       <AvatarFallback>{getUserInitials()}</AvatarFallback>
                     )}
@@ -589,7 +681,12 @@ const Navbar = () => {
                 <div className="flex items-center space-x-3 px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl mb-2">
                   <Avatar className="h-10 w-10 bg-primary text-white">
                     {userProfileImage ? (
-                      <AvatarImage src={userProfileImage} alt="Profile" />
+                      <AvatarImage
+                        src={userProfileImage}
+                        alt="Profile"
+                        className="avatar-image"
+                        key={`avatar-${Date.now()}`}
+                      />
                     ) : (
                       <AvatarFallback>{getUserInitials()}</AvatarFallback>
                     )}
