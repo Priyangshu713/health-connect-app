@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Heart, User, Apple, Bot, Menu, X, Info, LogIn, LogOut, History, UserRound, Settings } from 'lucide-react';
+import { Heart, User, Apple, Bot, Menu, X, Info, LogIn, LogOut, History, UserRound, Settings, Sparkles } from 'lucide-react';
 import { useHealthStore } from '@/store/healthStore';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { dispatchAuthEvent } from '@/App';
 import DoctorMenuNavigation from './DoctorMenuNavigation';
 import AccountSettings from '@/components/settings/AccountSettings';
+import ChangelogDialog from '@/components/common/ChangelogDialog';
 import { getUserProfile } from '@/api/auth';
 import {
   DropdownMenu,
@@ -40,6 +41,7 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [showAccountSettings, setShowAccountSettings] = useState(false);
+  const [showChangelogDialog, setShowChangelogDialog] = useState(false);
   const [userProfileImage, setUserProfileImage] = useState<string | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
 
@@ -470,6 +472,10 @@ const Navbar = () => {
                     <History className="mr-2 h-4 w-4" />
                     <span>History</span>
                   </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer" onClick={() => setShowChangelogDialog(true)}>
+                    <Sparkles className="mr-2 h-4 w-4 text-primary" />
+                    <span>What's New</span>
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive" onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />
@@ -789,6 +795,13 @@ const Navbar = () => {
         <AccountSettings
           isOpen={showAccountSettings}
           onClose={() => setShowAccountSettings(false)}
+        />
+      )}
+
+      {showChangelogDialog && (
+        <ChangelogDialog
+          isOpen={showChangelogDialog}
+          onClose={() => setShowChangelogDialog(false)}
         />
       )}
     </nav>
