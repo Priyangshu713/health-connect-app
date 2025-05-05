@@ -154,11 +154,13 @@ function App() {
                     <DoctorDetails />
                   </ProtectedRoute>
                 } />
+                {/* Temporarily disabled Doctor Portal
                 <Route path="/doctor-portal" element={
                   <ProtectedRoute publicPaths={publicPaths}>
                     <DoctorPortal />
                   </ProtectedRoute>
                 } />
+                */}
                 <Route path="/terms-privacy" element={
                   <ProtectedRoute publicPaths={publicPaths}>
                     <TermsAndPrivacyPage />
