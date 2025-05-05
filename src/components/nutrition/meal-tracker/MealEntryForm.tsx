@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -230,9 +229,9 @@ const MealEntryForm: React.FC<MealEntryFormProps> = ({
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Daily Meal Tracking</CardTitle>
+                <CardTitle>Daily Nutrition & Workout Tracker</CardTitle>
                 <CardDescription>
-                    Record what you eat throughout the day for nutritional insights
+                    Record your meals and workouts to monitor nutrition and fitness progress
                 </CardDescription>
             </CardHeader>
             <CardContent>
