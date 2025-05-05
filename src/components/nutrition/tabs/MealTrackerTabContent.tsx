@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
@@ -106,10 +105,11 @@ const MealTrackerTabContent: React.FC<MealTrackerTabContentProps> = ({
         >
             {geminiTier !== 'pro' ? (
                 <UpgradePrompt
-                    title="Pro Feature: Meal Tracker"
-                    description="Track your daily meals, calculate calories, and get AI-powered nutrition insights with the Pro tier."
+                    title="Pro Feature: Nutrition & Fitness Tracker"
+                    description="Track your meals and workouts, calculate calories, and get AI-powered health insights with the Pro tier."
                     features={[
                         "Track meals and calorie intake",
+                        "Record and analyze workouts",
                         "Get AI-powered nutrition analysis",
                         "Calculate BMR and TDEE",
                         "Monitor workout impact on calorie balance"
