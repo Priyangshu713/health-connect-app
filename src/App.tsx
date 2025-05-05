@@ -21,6 +21,8 @@ import Contact from './pages/Contact';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import UpdateNotification from './components/common/UpdateNotification';
+import ChangelogDemo from './components/demo/ChangelogDemo';
 import './App.css';
 import { synchronizeTier, logoutUser } from '@/api/auth';
 
@@ -171,11 +173,17 @@ function App() {
                     <Contact />
                   </ProtectedRoute>
                 } />
+                <Route path="/changelog-demo" element={
+                  <ProtectedRoute publicPaths={publicPaths}>
+                    <ChangelogDemo />
+                  </ProtectedRoute>
+                } />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </div>
             <Toaster />
             <div id="modal-root" ref={modalRootRef}></div>
+            <UpdateNotification />
           </div>
           <Analytics /> {/* Add Analytics component here */}
         </Router>
