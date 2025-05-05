@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useHealthStore } from '@/store/healthStore';
@@ -248,7 +247,7 @@ const Nutrition = () => {
             </TabsTrigger>
             <TabsTrigger value="meal-tracker" className="gap-2">
               <CalendarClock className="h-4 w-4" />
-              <span className={isMobile ? 'hidden md:inline' : ''}>Meal Tracker</span>
+              <span className={isMobile ? 'hidden md:inline' : ''}>Nutrition & Fitness Tracker</span>
               {isMobile && <span className="md:hidden">Tracker</span>}
               {geminiTier !== 'pro' && <Lock className="h-3 w-3 ml-1" />}
             </TabsTrigger>
