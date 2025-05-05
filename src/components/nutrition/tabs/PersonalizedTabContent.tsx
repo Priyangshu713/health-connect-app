@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -68,10 +67,10 @@ const PersonalizedTabContent = ({
   setShowUpgradeDialog,
   itemVariants
 }: PersonalizedTabContentProps) => {
-  
+
   if (geminiTier === 'free') {
     return (
-      <UpgradePrompt 
+      <UpgradePrompt
         title="Personalized Nutrition Plan"
         description="Get AI-powered nutrition plans customized specifically for your health profile."
         features={[
@@ -88,13 +87,13 @@ const PersonalizedTabContent = ({
       />
     );
   }
-  
+
   if (!healthData.completedProfile) {
     return (
       <EmptyRecommendations type="Profile" />
     );
   }
-  
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between gap-4 md:items-center p-4 bg-muted/40 rounded-lg border">
@@ -107,24 +106,16 @@ const PersonalizedTabContent = ({
             Get personalized nutrition recommendations based on your health profile.
           </p>
         </div>
-        
+
         <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-sm">AI Recommendations</span>
-            <Switch 
-              checked={useAI} 
-              onCheckedChange={handleToggleAI} 
-              aria-label="Toggle AI recommendations"
-            />
-          </div>
-          
+
           <div className="flex flex-wrap gap-2 items-center">
             {allergies.length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {allergies.map((allergy, index) => (
-                  <Badge 
-                    key={index} 
-                    variant="outline" 
+                  <Badge
+                    key={index}
+                    variant="outline"
                     className="flex items-center gap-1"
                     onClick={() => handleRemoveAllergy(allergy)}
                   >
@@ -134,34 +125,34 @@ const PersonalizedTabContent = ({
                 ))}
               </div>
             )}
-            
-            <Button 
-              variant="outline" 
-              size="sm" 
+
+            <Button
+              variant="outline"
+              size="sm"
               className="h-7"
               onClick={() => setShowAllergiesInput(true)}
             >
-              <Plus className="h-3 w-3 mr-1" /> 
+              <Plus className="h-3 w-3 mr-1" />
               {allergies.length > 0 ? 'Add More Allergies' : 'Add Allergies'}
             </Button>
           </div>
         </div>
       </div>
-      
+
       {showAllergiesInput && (
-        <AllergiesInput 
+        <AllergiesInput
           allergies={allergies}
           onAdd={handleAddAllergy}
           onRemove={handleRemoveAllergy}
         />
       )}
-      
+
       {loading ? (
         <LoadingNutritionPlan />
       ) : nutritionPlan ? (
         <div className="space-y-6">
           {nutritionPlan.generalAdvice && (
-            <motion.div 
+            <motion.div
               variants={itemVariants}
               className="p-4 bg-primary/5 rounded-lg border border-primary/20"
             >
@@ -174,10 +165,10 @@ const PersonalizedTabContent = ({
               </div>
             </motion.div>
           )}
-          
+
           <div className="grid grid-cols-1 gap-6">
             {nutritionPlan.categories.map((category, index) => (
-              <CategoryCard 
+              <CategoryCard
                 key={index}
                 category={category}
                 useAI={useAI}
@@ -200,3 +191,4 @@ const PersonalizedTabContent = ({
 };
 
 export default PersonalizedTabContent;
+
