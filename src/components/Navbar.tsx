@@ -230,9 +230,9 @@ const Navbar = () => {
     ...(isDoctorUser ? [] : [{ path: '/doctor-finder', label: 'Specialists', icon: <UserRound className="mr-2 h-4 w-4" />, proOnly: true }]),
     { path: '/ai-bot', label: 'AI Bot', icon: <Bot className="mr-2 h-4 w-4" /> },
     { path: '/about', label: 'About Us', icon: <Info className="mr-2 h-4 w-4" /> },
-    /* Temporarily disabled Doctor Portal
+    //  Temporarily disabled Doctor Portal
     ...(isDoctorUser ? [{ path: '/doctor-portal', label: 'Doctor Portal', icon: <UserRound className="mr-2 h-4 w-4" /> }] : []),
-    */
+    
   ];
 
   // Load user profile data including profile image
