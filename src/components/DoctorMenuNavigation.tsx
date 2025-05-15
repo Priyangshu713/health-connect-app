@@ -49,7 +49,7 @@ const DoctorMenuNavigation: React.FC = () => {
                     </NavigationMenuTrigger>
                     <NavigationMenuContent>
                         <ul className="grid gap-3 p-4 w-[200px]">
-                            {/* Temporarily disabled Doctor Portal
+                            {//Temporarily disabled Doctor Portal
                             <li>
                                 <NavigationMenuLink asChild>
                                     <Link
@@ -73,7 +73,7 @@ const DoctorMenuNavigation: React.FC = () => {
                                     </Link>
                                 </NavigationMenuLink>
                             </li>
-                            */}
+                            }
                         </ul>
                     </NavigationMenuContent>
                 </NavigationMenuItem>
