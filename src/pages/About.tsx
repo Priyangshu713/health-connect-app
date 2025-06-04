@@ -38,7 +38,7 @@ const AboutPage = () => {
       name: "Swapnil Pramanik",
       role: "Front-end Developer, Backend Developer",
       description: "Creates responsive user interfaces and builds the backend infrastructure for Health Connect.",
-      image: "https://media.licdn.com/dms/image/v2/D5603AQHG7r3IL51jRA/profile-displayphoto-shrink_800_800/B56ZVm.WtjHEAc-/0/1741189377249?e=1748476800&v=beta&t=bk1jgInA3G8PqWHI_wqTdnPMbasClPdEoG5EghUmxOo",
+      image: "https://avatars.githubusercontent.com/u/147524160?v=4",
       github: "https://github.com/Swapnil8918980827",
       linkedin: "https://www.linkedin.com/in/swapnil-pramanik-774860354/"
     },
