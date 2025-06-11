@@ -38,7 +38,7 @@ const changelogData: ChangelogItem[] = [
                 type: 'bugfix'
             },
             {
-                text: 'Models now use less resource for predoction, for faster user experience.',
+                text: 'Models now use less resource for predictions, for faster user experience.',
                 type: 'improvement'
             },
         ]
