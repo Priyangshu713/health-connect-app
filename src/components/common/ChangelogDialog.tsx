@@ -30,6 +30,20 @@ interface ChangelogItem {
 // Sample changelog data - this would come from your backend in a real app
 const changelogData: ChangelogItem[] = [
     {
+        date: 'June 11, 2025',
+        version: '3.3.0',
+        items: [
+            {
+                text: 'Fixed well known bugs for a smoother user experience.',
+                type: 'bugfix'
+            },
+            {
+                text: 'Models now use less resource for predoction, for faster user experience.',
+                type: 'improvement'
+            },
+        ]
+    },
+    {
         date: 'May 5, 2025',
         version: '3.2.0',
         items: [
