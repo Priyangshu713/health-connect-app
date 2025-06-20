@@ -1,7 +1,7 @@
 # 🩺 Health Connect – Major Project by The Alpha Group
 
 Welcome to the official frontend repository of **Health Connect**, developed as a major project by **The Alpha Group**.
-**- Abhilash Bhunia**
+# **- Abhilash Bhunia**
 **- Adnan Alam**
 **- Anirban Maity**
 **- Priyangshu Dutta**
