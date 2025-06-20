@@ -59,12 +59,12 @@ const AboutPage = () => {
       // linkedin: "https://linkedin.com/in/anirbanmaity"
     },
     // {
-    //   name: "Sourav Samanta",
-    //   role: "Nutritionist, Data Collection, Documentation",
-    //   description: "Responsible for gathering and analyzing nutritional data, ensuring accurate documentation, and supporting health research initiatives.",
-    //   image: "https://avatars.githubusercontent.com/u/142741363?v=4",
-    //   github: "https://github.com/SOURAV-08",
-    //   linkedin: "https://linkedin.com/in/anirbanmaity" 
+    //   name: "Tarak Nath Jana",
+    //   role: "Backend, Data Collection, API calling",
+    //   description: "Responsible for implementing the "Nutra Bar" feature and also responsible for building backend infrastructure with API callings.",
+    //   image: "https://avatars.githubusercontent.com/u/140452004?v=4",
+    //   github: "https://github.com/tarakNathJ/",
+    //   linkedin: "https://www.linkedin.com/in/tarak-nath-jana-7411a0301/" 
     // }
   ];
 
