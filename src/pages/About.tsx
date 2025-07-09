@@ -58,14 +58,14 @@ const AboutPage = () => {
       github: "https://github.com/cobraa9",
       // linkedin: "https://linkedin.com/in/anirbanmaity"
     },
-    // {
-    //   name: "Tarak Nath Jana",
-    //   role: "Backend, Data Collection, API calling",
-    //   description: "Responsible for implementing the "Nutra Bar" feature and also responsible for building backend infrastructure with API callings.",
-    //   image: "https://avatars.githubusercontent.com/u/140452004?v=4",
-    //   github: "https://github.com/tarakNathJ/",
-    //   linkedin: "https://www.linkedin.com/in/tarak-nath-jana-7411a0301/" 
-    // }
+    {
+      name: "Tarak Nath Jana",
+      role: "Backend, Data Collection, API calling",
+      description: "Responsible for building backend infrastructure with API callings.",
+      image: "https://avatars.githubusercontent.com/u/140452004?v=4",
+      github: "https://github.com/tarakNathJ/",
+      linkedin: "https://www.linkedin.com/in/tarak-nath-jana-7411a0301/" 
+    }
   ];
 
   const navigate = useNavigate();
